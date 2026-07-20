@@ -14,6 +14,7 @@ import {
   BookOpen,
   ArrowLeftRight,
   Eye,
+  Sparkles,
 } from "lucide-react";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { useActivityStore } from "@/lib/stores/activity-store";
@@ -108,6 +109,14 @@ const ACTIONS = [
     hint: "Full inventory",
     href: "/collection",
     icon: Library,
+    intent: "find",
+  },
+  {
+    id: "demo",
+    label: "Public demo",
+    hint: "Neurabeach showcase · synthetic intents",
+    href: "/demo",
+    icon: Sparkles,
     intent: "find",
   },
 ] as const;

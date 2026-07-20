@@ -1,16 +1,17 @@
 /**
- * BCI / Neuralink integration surface for NeuraBinder.
+ * BCI integration surface for NeuraBinder (computer-side only).
  *
- * ROADMAP — Neuralink SDK integration points:
- * 1. Replace KeyboardBciAdapter with NeuralinkWebBridge when SDK ships.
- * 2. Map discrete neural intents → BciIntent (select, confirm, cancel, back, search).
- * 3. Optional continuous cursor deltas via onCursorDelta for high-bandwidth control.
- * 4. Future sensory feedback via sendFeedback (haptic / neural stimulation hooks).
- * 5. WebHID/WebUSB bridge placeholder for interim research hardware.
+ * Not affiliated with Neuralink. Not implant firmware or medical software.
  *
- * Design principle: the app never blocks on BCI. Keyboard, mouse, touch, and
- * screen readers remain first-class. BCI Mode only changes density, ranking,
- * and target size — not availability of features.
+ * ROADMAP — generic intent / future hardware bridges:
+ * 1. Prefer GenericIntentEvent shapes in `generic-intent.ts` (NeuralBridge-ready).
+ * 2. Map class_label / switch_binary → BciIntent (select, confirm, cancel, …).
+ * 3. velocity_2d reserved for continuous cursor when a middleware provides it.
+ * 4. Optional sensory feedback via sendFeedback (haptic stubs).
+ * 5. hardware key `neuralink_sdk_future` is a catalog flag only — no implant I/O.
+ *
+ * Design principle: never block on BCI. Keyboard, mouse, touch, and screen
+ * readers remain first-class. BCI Mode only changes density, ranking, targets.
  */
 
 import type { BciAdapter, BciIntent } from "@/lib/types";

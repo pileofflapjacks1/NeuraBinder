@@ -1,0 +1,30 @@
+{
+  "manifest_version": "1.0.0",
+  "name": "neurabinder",
+  "display_name": "NeuraBinder",
+  "version": "0.2.0",
+  "description": "BCI-inspired TCG collection & portfolio manager (Pokémon TCG, Lorcana) with intent palette, synthetic intent demo, dwell/switch modes, and low-clutter UI. Computer-side web app — not implant software.",
+  "safety_class": "computer_side",
+  "runtime": "web",
+  "inputs": [
+    "class_label",
+    "switch_binary",
+    "velocity_2d",
+    "synthetic"
+  ],
+  "outputs": ["ui_only"],
+  "hardware": [
+    "synthetic",
+    "generic_intent",
+    "websocket_intent",
+    "neuralink_sdk_future"
+  ],
+  "permissions": ["none"],
+  "dof": "switch_2_4",
+  "latency_class": "interactive",
+  "platforms": ["web", "macos", "windows", "linux"],
+  "calibration": "optional",
+  "entrypoint": "pnpm dev",
+  "repository": "https://github.com/pileofflapjacks1/NeuraBinder",
+  "banned_claims": true
+}

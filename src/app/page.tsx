@@ -82,8 +82,9 @@ export default function HomePage() {
       <section className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-card to-cyan-500/10 p-6 md:p-10">
         <div className="relative z-10 max-w-2xl">
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Badge className="text-sm">Neuralink-ready PWA</Badge>
+            <Badge className="text-sm">BCI-inspired PWA</Badge>
             <Badge variant="secondary">Pokémon TCG · Disney Lorcana</Badge>
+            <Badge variant="outline">Neurabeach suite</Badge>
           </div>
           <h1
             className={cn(
@@ -99,13 +100,19 @@ export default function HomePage() {
               bciMode ? "text-lg" : "text-base"
             )}
           >
-            NeuraBinder is the first collection tracker designed from the ground
-            up for high-bandwidth BCIs. Predictive ranking, low clutter, large
-            targets — and fully excellent with keyboard, mouse, touch, and
-            screen readers.
+            NeuraBinder is a collection tracker designed for high-bandwidth
+            control patterns (intent palette, dwell/switch, low clutter) while
+            staying excellent with keyboard, mouse, touch, and screen readers.
+            Computer-side demo only — not implant software.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild size={bciMode ? "bci" : "lg"}>
+              <Link href="/demo">
+                <Zap className="h-4 w-4" />
+                Open public demo
+              </Link>
+            </Button>
+            <Button asChild size={bciMode ? "bci" : "lg"} variant="secondary">
               <Link href="/collection">
                 <Library className="h-4 w-4" />
                 Open collection
