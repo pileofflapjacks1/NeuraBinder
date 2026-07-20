@@ -6,15 +6,20 @@
 
 ---
 
-## Features (MVP demo)
+## Features (local-first MVP)
 
-- **Collection management** — quantity, condition (NM→DMG), variants, graded slabs, cost basis, notes, multi-lists
-- **BCI Mode** — enlarged targets, lower density, discrete intent navigation (Enter / ←→ / `/` / Esc)
-- **Natural language command bar** — e.g. “Illustration Rares under $40”, “missing for 151 master set”
-- **Scan flow** — ranked candidates + one-action confirm (vision pluggable; mock ID included)
-- **Portfolio** — value, cost basis, P/L, allocation charts, CSV export
-- **Lists** — collection, want, trade, for sale, investment holds + trade proposal clipboard
-- **Offline-friendly local state** — Zustand + localStorage (no backend required to try)
+- **Collection management** — qty, condition, variants, grades, cost basis, notes, multi-lists
+- **CSV import** — NeuraBinder / TCGPlayer-style / Collectr-style + duplicate merge (`/import`)
+- **BCI Mode + profile** — targets, intent-only, switch-scan, calibration wizard, sound feedback
+- **Intent palette** — ⌘K power actions with predictive ranking
+- **NL command bar that acts** — filters + mutations (want list, move to trade, alerts…)
+- **Batch scan queue** — simulate/capture → pending confirms (vision API later)
+- **Visual binder** — 3×3 pages + cheapest path to complete (`/binder`)
+- **Trade match** — local seed peers + trade proposal copy (`/trade`)
+- **Watch & intel** — price alerts, watchlist, mock market refresh (`/watch`)
+- **Portfolio + tax lots** — charts, CSV export, lot cost basis
+- **Offline queue** — IndexedDB ops when offline; auto-flush online
+- See **TODO.md** for full backlog and external blockers
 
 ---
 

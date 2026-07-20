@@ -29,6 +29,8 @@ import {
   sortCollection,
 } from "@/lib/collection/query";
 import { estimateUnitValue } from "@/lib/utils";
+import type { ImportRow } from "@/lib/types/features";
+import { driftCatalogPrices } from "@/lib/market/pricing";
 
 interface CollectionState {
   catalog: Card[];
@@ -39,6 +41,7 @@ interface CollectionState {
   sort: CollectionSort;
   selectedId: string | null;
   hydrated: boolean;
+  marketRefreshedAt?: string;
 
   // Derived helpers (recomputed on demand)
   getItems: () => CollectionItem[];
@@ -54,7 +57,8 @@ interface CollectionState {
   selectItem: (id: string | null) => void;
 
   addCard: (
-    input: Omit<UserCard, "id" | "userId" | "createdAt" | "updatedAt">
+    input: Omit<UserCard, "id" | "userId" | "createdAt" | "updatedAt">,
+    opts?: { mergeDuplicates?: boolean }
   ) => string;
   updateCard: (id: string, patch: Partial<UserCard>) => void;
   removeCard: (id: string) => void;
@@ -63,6 +67,16 @@ interface CollectionState {
   createList: (name: string, type: CardList["type"]) => string;
   addToList: (userCardId: string, listId: string) => void;
   removeFromList: (userCardId: string, listId: string) => void;
+
+  importRows: (rows: ImportRow[], mergeDuplicates?: boolean) => {
+    added: number;
+    merged: number;
+    skipped: number;
+  };
+  addWantCard: (cardId: string) => void;
+  removeWantCard: (cardId: string) => void;
+  refreshMarketPrices: () => void;
+  revalueUserCards: () => void;
 
   resetToSeed: () => void;
   markHydrated: () => void;
@@ -146,7 +160,23 @@ export const useCollectionStore = create<CollectionState>()(
 
       selectItem: (id) => set({ selectedId: id }),
 
-      addCard: (input) => {
+      addCard: (input, opts) => {
+        const merge = opts?.mergeDuplicates !== false;
+        if (merge) {
+          const existing = get().userCards.find(
+            (uc) =>
+              uc.cardId === input.cardId &&
+              uc.condition === input.condition &&
+              uc.variant === input.variant &&
+              uc.isGraded === input.isGraded &&
+              uc.grade === input.grade &&
+              uc.gradeCompany === input.gradeCompany
+          );
+          if (existing) {
+            get().adjustQuantity(existing.id, input.quantity);
+            return existing.id;
+          }
+        }
         const id = nanoid();
         const card = get().catalog.find((c) => c.id === input.cardId);
         const estimatedValue = estimateUnitValue(
@@ -258,6 +288,92 @@ export const useCollectionStore = create<CollectionState>()(
         }));
       },
 
+      importRows: (rows, mergeDuplicates = true) => {
+        let added = 0;
+        let merged = 0;
+        let skipped = 0;
+        for (const row of rows) {
+          if (!row.matchedCardId) {
+            skipped++;
+            continue;
+          }
+          const before = get().userCards.length;
+          const existing = get().userCards.find(
+            (uc) =>
+              uc.cardId === row.matchedCardId &&
+              uc.condition === row.condition &&
+              uc.variant === row.variant &&
+              !!uc.isGraded === !!row.isGraded
+          );
+          get().addCard(
+            {
+              cardId: row.matchedCardId,
+              quantity: row.quantity,
+              condition: row.condition,
+              language: row.language,
+              variant: row.variant,
+              isGraded: row.isGraded,
+              gradeCompany: row.gradeCompany,
+              grade: row.grade,
+              purchasePrice: row.purchasePrice,
+              purchaseDate: row.purchaseDate,
+              notes: row.notes,
+              listIds: ["list-collection"],
+            },
+            { mergeDuplicates }
+          );
+          if (existing && mergeDuplicates) merged++;
+          else if (get().userCards.length > before) added++;
+          else merged++;
+        }
+        get().revalueUserCards();
+        return { added, merged, skipped };
+      },
+
+      addWantCard: (cardId) => {
+        set((s) =>
+          s.wantCardIds.includes(cardId)
+            ? s
+            : { wantCardIds: [...s.wantCardIds, cardId] }
+        );
+      },
+
+      removeWantCard: (cardId) => {
+        set((s) => ({
+          wantCardIds: s.wantCardIds.filter((id) => id !== cardId),
+        }));
+      },
+
+      refreshMarketPrices: () => {
+        set((s) => {
+          const catalog = driftCatalogPrices(s.catalog);
+          return {
+            catalog,
+            marketRefreshedAt: new Date().toISOString(),
+          };
+        });
+        get().revalueUserCards();
+      },
+
+      revalueUserCards: () => {
+        set((s) => ({
+          userCards: s.userCards.map((uc) => {
+            const card = s.catalog.find((c) => c.id === uc.cardId);
+            return {
+              ...uc,
+              estimatedValue: estimateUnitValue(
+                card?.marketPrice,
+                uc.condition,
+                uc.isGraded,
+                uc.gradeCompany,
+                uc.grade
+              ),
+              updatedAt: uc.updatedAt,
+            };
+          }),
+        }));
+      },
+
       resetToSeed: () =>
         set({
           catalog: SEED_CARDS,
@@ -267,6 +383,7 @@ export const useCollectionStore = create<CollectionState>()(
           filters: defaultFilters,
           sort: defaultSort,
           selectedId: null,
+          marketRefreshedAt: undefined,
         }),
 
       markHydrated: () => set({ hydrated: true }),
@@ -279,12 +396,17 @@ export const useCollectionStore = create<CollectionState>()(
         wantCardIds: s.wantCardIds,
         filters: s.filters,
         sort: s.sort,
-        // catalog is seed-backed; re-merge on load
+        catalog: s.catalog,
+        marketRefreshedAt: s.marketRefreshedAt,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // Always use latest seed catalog for demo
-          state.catalog = SEED_CARDS;
+          // Merge latest seed ids into catalog (keep price drifts if present)
+          const byId = new Map(state.catalog?.map((c) => [c.id, c]) ?? []);
+          for (const c of SEED_CARDS) {
+            if (!byId.has(c.id)) byId.set(c.id, c);
+          }
+          state.catalog = [...byId.values()];
           state.hydrated = true;
         }
       },

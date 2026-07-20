@@ -135,6 +135,16 @@ html.bci-mode :focus-visible {
   scroll-margin: 6rem;
 }
 
+/* Profile target size multipliers */
+.bci-targets-large button,
+.bci-targets-large a[href] {
+  min-height: 2.75rem;
+}
+.bci-targets-xl button,
+.bci-targets-xl a[href] {
+  min-height: 3.25rem;
+}
+
 /* Screen reader utility */
 .sr-only {
   position: absolute;

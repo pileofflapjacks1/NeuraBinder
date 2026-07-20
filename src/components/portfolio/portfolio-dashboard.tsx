@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { useCollectionStore } from "@/lib/stores/collection-store";
+import { useLotsStore } from "@/lib/stores/lots-store";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,8 @@ export function PortfolioDashboard() {
 
   const portfolio = useMemo(() => getPortfolio(), [getPortfolio, userCards]);
   const items = useMemo(() => getItems(), [getItems, userCards]);
+  const lots = useLotsStore((s) => s.lots);
+  const totalLotCost = useLotsStore((s) => s.totalLotCost);
 
   const gameData = Object.entries(portfolio.byGame).map(([name, value]) => ({
     name,
@@ -199,6 +202,38 @@ export function PortfolioDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className={cn(bciMode && "border-2")}>
+        <CardHeader>
+          <CardTitle>
+            Tax lots · cost basis {formatCurrency(totalLotCost())}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="max-h-56 space-y-2 overflow-auto">
+            {lots.slice(0, 12).map((l) => {
+              const item = items.find((i) => i.id === l.userCardId);
+              return (
+                <li
+                  key={l.id}
+                  className="flex justify-between gap-2 rounded-xl border border-border px-3 py-2 text-sm"
+                >
+                  <span className="truncate">
+                    {item?.card.name ?? l.userCardId} · {l.remaining} remaining
+                  </span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                    {formatCurrency(l.remaining * l.unitCost + l.fees)}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Lot tracking is local. Realized gains on sale are Phase 2 with full
+            disposition UI.
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className={cn(bciMode && "border-2")}>

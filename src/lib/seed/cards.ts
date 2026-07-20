@@ -5,6 +5,7 @@
 
 import type { Card, CardList, UserCard } from "@/lib/types";
 import { estimateUnitValue } from "@/lib/utils";
+import { EXTRA_CARDS } from "@/lib/seed/extra-cards";
 
 const now = () => new Date().toISOString();
 
@@ -502,6 +503,7 @@ export const SEED_CARDS: Card[] = [
     imageUrl: "https://images.pokemontcg.io/sv3pt5/65.png",
     marketPrice: 3.2,
   }),
+  ...EXTRA_CARDS,
 ];
 
 const DEMO_USER = "demo-user";

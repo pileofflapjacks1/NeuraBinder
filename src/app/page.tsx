@@ -28,13 +28,13 @@ const LINKS = [
   {
     href: "/scan",
     title: "Scan",
-    desc: "Camera identify → ranked candidates → one-intent confirm",
+    desc: "Batch queue → ranked candidates → one-intent confirm",
     icon: Camera,
   },
   {
     href: "/portfolio",
     title: "Portfolio",
-    desc: "Value, cost basis, allocation, and CSV export",
+    desc: "Value, cost basis, tax lots, allocation, CSV export",
     icon: LineChart,
   },
   {
@@ -42,6 +42,30 @@ const LINKS = [
     title: "Lists",
     desc: "Want, trade binder, for sale, investment holds",
     icon: List,
+  },
+  {
+    href: "/binder",
+    title: "Visual binder",
+    desc: "3×3 pages + cheapest path to complete a set",
+    icon: Library,
+  },
+  {
+    href: "/import",
+    title: "Import CSV",
+    desc: "TCGPlayer / Collectr / NeuraBinder — local match & merge",
+    icon: Sparkles,
+  },
+  {
+    href: "/trade",
+    title: "Trade match",
+    desc: "Local want/have peers + one-tap proposal",
+    icon: List,
+  },
+  {
+    href: "/watch",
+    title: "Watch & intel",
+    desc: "Price alerts, watchlist, seed market notes",
+    icon: LineChart,
   },
 ];
 

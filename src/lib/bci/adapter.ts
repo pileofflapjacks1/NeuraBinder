@@ -127,8 +127,11 @@ export class NeuralinkBridgeAdapter implements BciAdapter {
     return () => {};
   }
 
-  sendFeedback(_payload: { type: string; intensity?: number }): void {
-    // ROADMAP: sensory feedback
+  sendFeedback(payload: { type: string; intensity?: number }): void {
+    // ROADMAP: neural / haptic sensory feedback when SDK available
+    if (typeof console !== "undefined") {
+      console.debug("[NeuraBinder BCI] sendFeedback stub", payload);
+    }
   }
 }
 

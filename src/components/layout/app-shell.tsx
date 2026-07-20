@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Brain,
   Camera,
+  Command,
   LayoutGrid,
   Library,
   LineChart,
@@ -15,6 +16,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { CommandBar } from "@/components/command/command-bar";
+import { IntentPalette } from "@/components/intent/intent-palette";
+import { OfflineBanner } from "@/components/layout/offline-banner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -32,15 +35,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const bciMode = useBciStore((s) => s.bciMode);
   const toggleBciMode = useBciStore((s) => s.toggleBciMode);
   const setCommandBarOpen = useBciStore((s) => s.setCommandBarOpen);
+  const setIntentPaletteOpen = useBciStore((s) => s.setIntentPaletteOpen);
+  const profile = useBciStore((s) => s.profile);
+
+  const targetClass =
+    profile.targetSize === "xl"
+      ? "bci-targets-xl"
+      : profile.targetSize === "large"
+        ? "bci-targets-large"
+        : "";
 
   return (
-    <div className="flex min-h-full flex-col bg-background text-foreground">
+    <div
+      className={cn(
+        "flex min-h-full flex-col bg-background text-foreground",
+        targetClass
+      )}
+    >
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground"
       >
         Skip to main content
       </a>
+
+      <OfflineBanner />
+      <IntentPalette />
 
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-md">
         <div
@@ -63,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav
-            className="ml-2 hidden items-center gap-1 md:flex"
+            className="ml-2 hidden items-center gap-1 lg:flex"
             aria-label="Primary"
           >
             {NAV.map((item) => {
@@ -94,6 +114,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Button
               variant="outline"
               size={bciMode ? "bci" : "sm"}
+              onClick={() => setIntentPaletteOpen(true)}
+              className="hidden sm:inline-flex"
+              aria-label="Open intent palette"
+            >
+              <Command className="h-4 w-4" />
+              <span className="hidden md:inline">Intents</span>
+              <kbd className="ml-1 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                ⌘K
+              </kbd>
+            </Button>
+
+            <Button
+              variant="outline"
+              size={bciMode ? "bci" : "sm"}
               onClick={() => setCommandBarOpen(true)}
               className="hidden sm:inline-flex"
               aria-label="Open command bar"
@@ -113,7 +147,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               aria-label={
                 bciMode ? "Disable BCI Mode" : "Enable Neuralink / BCI Mode"
               }
-              title="Neuralink / BCI Mode: larger targets, lower density, predictive ranking"
             >
               <Brain className="h-4 w-4" />
               <span className="hidden lg:inline">
@@ -123,7 +156,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Always-available NL bar strip on large screens */}
         <div className="border-t border-border/50 px-4 py-2">
           <div className="mx-auto max-w-[1600px]">
             <CommandBar compact />
@@ -136,30 +168,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-4 md:py-6"
       >
         {bciMode && (
-          <div className="mb-4 flex items-center gap-2" role="status">
+          <div className="mb-4 flex flex-wrap items-center gap-2" role="status">
             <Badge variant="default" className="text-sm">
               BCI Mode active
             </Badge>
+            {profile.intentOnlyMode && (
+              <Badge variant="warning">Intent-only</Badge>
+            )}
             <span className="text-sm text-muted-foreground">
-              Large targets · predictive ranking · intents: Enter select · / search ·
-              Esc cancel · ←/→ navigate
+              ⌘K intents · / ask · Enter select · Esc cancel · ←/→ navigate
             </span>
           </div>
         )}
         {children}
       </main>
 
-      {/* Mobile bottom nav — large BCI targets */}
       <nav
         className="sticky bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur md:hidden"
         aria-label="Mobile"
       >
-        <ul
-          className={cn(
-            "grid grid-cols-5",
-            bciMode ? "h-20" : "h-16"
-          )}
-        >
+        <ul className={cn("grid grid-cols-5", bciMode ? "h-20" : "h-16")}>
           {NAV.filter((n) => n.href !== "/settings").map((item) => {
             const active =
               item.href === "/"

@@ -1,67 +1,57 @@
 "use client";
 
 /**
- * BCI-optimized camera scan flow.
- * Priority: confirmation UX with ranked candidates + ≤2–3 intentional signals.
- *
- * ROADMAP:
- * - Wire MediaStream + on-device / edge vision model
- * - Third-party card recognition API fallback
- * - Slab OCR for PSA/BGS/CGC labels
- * - Neural confirmation: look → propose → intent confirm
+ * BCI-optimized camera + batch scan queue.
+ * Mock identification locally; vision API is a later plug-in.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Camera, Check, RefreshCw, X } from "lucide-react";
+import { Camera, Check, Layers, RefreshCw, X } from "lucide-react";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { useCollectionStore } from "@/lib/stores/collection-store";
+import { useScanStore } from "@/lib/stores/scan-store";
+import { useLotsStore } from "@/lib/stores/lots-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Card as TcgCard, CardCondition, ScanCandidate, VariantType } from "@/lib/types";
 import { cn, formatCurrency, rarityLabel } from "@/lib/utils";
 import { getBciAdapter } from "@/lib/bci/adapter";
 import { toast } from "sonner";
-
-type Phase = "idle" | "preview" | "candidates" | "confirmed";
-
-function mockIdentify(catalog: TcgCard[]): ScanCandidate[] {
-  // Simulate vision model: pick 3 ranked cards biased toward mid/high value
-  const shuffled = [...catalog].sort(() => Math.random() - 0.5);
-  const top = shuffled.slice(0, 3);
-  return top.map((card, i) => ({
-    cardId: card.id,
-    card,
-    confidence: Math.round((0.92 - i * 0.12 + Math.random() * 0.05) * 100) / 100,
-    suggestedCondition: (["NM", "NM", "LP", "MP"] as CardCondition[])[
-      Math.floor(Math.random() * 4)
-    ],
-    suggestedVariant: (card.rarity.includes("illustration")
-      ? card.rarity
-      : card.rarity === "enchanted"
-        ? "enchanted"
-        : "normal") as VariantType,
-  }));
-}
+import { useActivityStore } from "@/lib/stores/activity-store";
 
 export function ScanFlow() {
   const bciMode = useBciStore((s) => s.bciMode);
+  const profile = useBciStore((s) => s.profile);
+  const playFeedback = useBciStore((s) => s.playFeedback);
   const catalog = useCollectionStore((s) => s.catalog);
   const addCard = useCollectionStore((s) => s.addCard);
+  const addLot = useLotsStore((s) => s.addLot);
+  const log = useActivityStore((s) => s.log);
+
+  const queue = useScanStore((s) => s.queue);
+  const activeId = useScanStore((s) => s.activeId);
+  const enqueueSimulated = useScanStore((s) => s.enqueueSimulated);
+  const setActive = useScanStore((s) => s.setActive);
+  const selectCandidate = useScanStore((s) => s.selectCandidate);
+  const confirm = useScanStore((s) => s.confirm);
+  const reject = useScanStore((s) => s.reject);
+  const clearDone = useScanStore((s) => s.clearDone);
+  const pendingCount = useScanStore((s) => s.pendingCount);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [candidates, setCandidates] = useState<ScanCandidate[]>([]);
-  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const active = queue.find((q) => q.id === activeId) ??
+    queue.find((q) => q.status === "pending");
 
   const stopCamera = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraOn(false);
   }, []);
 
   const startCamera = async () => {
@@ -76,34 +66,38 @@ export function ScanFlow() {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      setPhase("preview");
+      setCameraOn(true);
     } catch {
-      setCameraError(
-        "Camera unavailable — you can still run a simulated scan for demo."
-      );
-      setPhase("preview");
+      setCameraError("Camera unavailable — use Simulate / Batch instead.");
+      setCameraOn(false);
     }
   };
 
   useEffect(() => () => stopCamera(), [stopCamera]);
 
-  const captureAndIdentify = () => {
+  const captureToQueue = () => {
     setBusy(true);
-    // Near-real-time placeholder: short delay then ranked candidates
     window.setTimeout(() => {
-      const result = mockIdentify(catalog);
-      setCandidates(result);
-      setSelectedIdx(0);
-      setPhase("candidates");
+      enqueueSimulated(catalog, profile.scanAutoRankAggressive);
       setBusy(false);
-      toast.message("Candidates ready — confirm top match or pick another");
-    }, 450);
+      playFeedback("select");
+      toast.message("Scan added to queue");
+      log("Scan card", { href: "/scan", intent: "add" });
+    }, 350);
   };
 
-  const confirmAdd = (listId = "list-collection") => {
-    const c = candidates[selectedIdx];
+  const batchSimulate = (n: number) => {
+    for (let i = 0; i < n; i++) {
+      enqueueSimulated(catalog, profile.scanAutoRankAggressive);
+    }
+    toast.success(`Queued ${n} simulated scans`);
+  };
+
+  const confirmActive = (listId = "list-collection") => {
+    if (!active || active.status !== "pending") return;
+    const c = active.candidates[active.selectedIndex];
     if (!c) return;
-    addCard({
+    const id = addCard({
       cardId: c.cardId,
       quantity: 1,
       condition: c.suggestedCondition ?? "NM",
@@ -111,38 +105,51 @@ export function ScanFlow() {
       variant: c.suggestedVariant ?? "normal",
       isGraded: false,
       listIds: [listId],
-      notes: `Added via scan (${Math.round(c.confidence * 100)}% confidence)`,
+      notes: `Scan ${Math.round(c.confidence * 100)}% conf`,
+      purchasePrice: c.card.marketPrice,
+      purchaseDate: new Date().toISOString().slice(0, 10),
     });
-    setPhase("confirmed");
+    addLot({
+      userCardId: id,
+      quantity: 1,
+      unitCost: c.card.marketPrice ?? 0,
+      fees: 0,
+      purchasedAt: new Date().toISOString().slice(0, 10),
+      notes: "From scan",
+    });
+    confirm(active.id);
+    playFeedback("success");
     toast.success(`Added ${c.card.name}`);
   };
 
-  // BCI intents for scan confirmation (≤2–3 signals)
   useEffect(() => {
-    if (!bciMode || phase !== "candidates") return;
+    if (!bciMode || !active || active.status !== "pending") return;
     const adapter = getBciAdapter();
     return adapter.onIntent((intent) => {
       if (intent === "next")
-        setSelectedIdx((i) => (i + 1) % Math.max(candidates.length, 1));
+        selectCandidate(
+          active.id,
+          (active.selectedIndex + 1) % active.candidates.length
+        );
       if (intent === "prev")
-        setSelectedIdx(
-          (i) =>
-            (i - 1 + candidates.length) % Math.max(candidates.length, 1)
+        selectCandidate(
+          active.id,
+          (active.selectedIndex - 1 + active.candidates.length) %
+            active.candidates.length
         );
       if (intent === "confirm" || intent === "select" || intent === "add") {
-        confirmAdd();
+        confirmActive();
       }
-      if (intent === "cancel" || intent === "back") {
-        setPhase("preview");
-        setCandidates([]);
-      }
+      if (intent === "cancel") reject(active.id);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bciMode, phase, candidates, selectedIdx]);
+  }, [bciMode, active]);
+
+  const pending = queue.filter((q) => q.status === "pending");
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-6">
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div>
         <h1
           className={cn(
             "font-bold tracking-tight",
@@ -152,8 +159,8 @@ export function ScanFlow() {
           Scan
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Look at a card → system proposes identity & condition → confirm with one
-          action. Optimized for Neuralink discrete intents.
+          Batch queue → ranked candidates → one-intent confirm.{" "}
+          <Badge variant="secondary">{pendingCount()} pending</Badge>
         </p>
       </div>
 
@@ -161,208 +168,195 @@ export function ScanFlow() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5 text-primary" />
-            Camera + neural confirmation
+            Capture
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {(phase === "idle" || phase === "preview") && (
-            <>
-              <div className="relative aspect-video overflow-hidden rounded-2xl bg-black/90">
-                <video
-                  ref={videoRef}
-                  className="h-full w-full object-cover"
-                  playsInline
-                  muted
-                  aria-label="Camera preview"
-                />
-                {phase === "idle" && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white">
-                    <Camera className="h-12 w-12 opacity-60" />
-                    <p className="text-sm opacity-80">Camera off</p>
-                  </div>
-                )}
-                {/* Viewfinder guides — large for BCI spatial memory */}
-                <div className="pointer-events-none absolute inset-8 rounded-xl border-2 border-white/40" />
+          <div className="relative aspect-video overflow-hidden rounded-2xl bg-black/90">
+            <video
+              ref={videoRef}
+              className="h-full w-full object-cover"
+              playsInline
+              muted
+              aria-label="Camera preview"
+            />
+            {!cameraOn && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white">
+                <Camera className="h-12 w-12 opacity-60" />
+                <p className="text-sm opacity-80">Camera off</p>
               </div>
-
-              {cameraError && (
-                <p className="text-sm text-warning" role="alert">
-                  {cameraError}
-                </p>
-              )}
-
-              <div className="flex flex-wrap gap-2">
-                {phase === "idle" ? (
-                  <Button
-                    size={bciMode ? "bci" : "lg"}
-                    onClick={() => void startCamera()}
-                  >
-                    <Camera className="h-4 w-4" />
-                    Start camera
-                  </Button>
+            )}
+            <div className="pointer-events-none absolute inset-8 rounded-xl border-2 border-white/40" />
+          </div>
+          {cameraError && (
+            <p className="text-sm text-warning" role="alert">
+              {cameraError}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {!cameraOn ? (
+              <Button size={bciMode ? "bci" : "lg"} onClick={() => void startCamera()}>
+                <Camera className="h-4 w-4" />
+                Start camera
+              </Button>
+            ) : (
+              <Button
+                size={bciMode ? "bci" : "lg"}
+                onClick={captureToQueue}
+                disabled={busy}
+              >
+                {busy ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
                 ) : (
-                  <>
-                    <Button
-                      size={bciMode ? "bci" : "lg"}
-                      onClick={captureAndIdentify}
-                      disabled={busy}
-                    >
-                      {busy ? (
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Check className="h-4 w-4" />
-                      )}
-                      Identify card
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size={bciMode ? "bci" : "lg"}
-                      onClick={captureAndIdentify}
-                    >
-                      Simulate scan
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size={bciMode ? "bci" : "default"}
-                      onClick={() => {
-                        stopCamera();
-                        setPhase("idle");
-                      }}
-                    >
-                      Stop
-                    </Button>
-                  </>
-                )}
-              </div>
-            </>
-          )}
-
-          {phase === "candidates" && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Top candidates with confidence.{" "}
-                {bciMode && (
-                  <span className="text-primary">
-                    Enter to confirm · ←/→ to switch · Esc to cancel
-                  </span>
-                )}
-              </p>
-              <ul className="space-y-2" role="listbox" aria-label="Scan candidates">
-                {candidates.map((c, i) => {
-                  const selected = i === selectedIdx;
-                  return (
-                    <li key={c.cardId}>
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={selected}
-                        onClick={() => setSelectedIdx(i)}
-                        className={cn(
-                          "flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          bciMode && "min-h-[5rem] p-5",
-                          selected
-                            ? "border-primary bg-primary/10 ring-2 ring-primary/30"
-                            : "border-border hover:bg-accent/50"
-                        )}
-                      >
-                        <div className="flex h-14 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold">
-                          #{i + 1}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className={cn(
-                              "font-semibold",
-                              bciMode ? "text-lg" : "text-base"
-                            )}
-                          >
-                            {c.card.name}
-                          </p>
-                          <p className="truncate text-sm text-muted-foreground">
-                            {c.card.setName} · #{c.card.number} ·{" "}
-                            {rarityLabel(c.card.rarity)}
-                          </p>
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            <Badge>
-                              {Math.round(c.confidence * 100)}% conf
-                            </Badge>
-                            <Badge variant="secondary">
-                              {c.suggestedCondition}
-                            </Badge>
-                            <Badge variant="outline">
-                              {c.suggestedVariant}
-                            </Badge>
-                          </div>
-                        </div>
-                        <span className="font-mono font-semibold text-primary">
-                          {formatCurrency(c.card.marketPrice)}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size={bciMode ? "bci" : "lg"}
-                  onClick={() => confirmAdd()}
-                >
                   <Check className="h-4 w-4" />
-                  Confirm & add
-                </Button>
-                <Button
-                  variant="outline"
-                  size={bciMode ? "bci" : "lg"}
-                  onClick={() => confirmAdd("list-trade")}
-                >
-                  Add to trade binder
-                </Button>
-                <Button
-                  variant="ghost"
-                  size={bciMode ? "bci" : "default"}
-                  onClick={() => {
-                    setPhase("preview");
-                    setCandidates([]);
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                  Reject
-                </Button>
-              </div>
-            </div>
-          )}
+                )}
+                Capture → queue
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size={bciMode ? "bci" : "lg"}
+              onClick={captureToQueue}
+            >
+              Simulate one
+            </Button>
+            <Button
+              variant="secondary"
+              size={bciMode ? "bci" : "lg"}
+              onClick={() => batchSimulate(5)}
+            >
+              <Layers className="h-4 w-4" />
+              Batch ×5
+            </Button>
+            {cameraOn && (
+              <Button variant="ghost" size={bciMode ? "bci" : "default"} onClick={stopCamera}>
+                Stop
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-          {phase === "confirmed" && (
-            <div className="flex flex-col items-center gap-4 py-8 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/20 text-success">
-                <Check className="h-8 w-8" />
-              </div>
-              <p className={cn("font-semibold", bciMode ? "text-xl" : "text-lg")}>
-                Added to collection
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  size={bciMode ? "bci" : "default"}
-                  onClick={() => {
-                    setPhase("preview");
-                    setCandidates([]);
-                  }}
-                >
-                  Scan another
-                </Button>
-                <Button
-                  variant="outline"
-                  size={bciMode ? "bci" : "default"}
-                  onClick={() => {
-                    stopCamera();
-                    setPhase("idle");
-                  }}
-                >
-                  Done
-                </Button>
-              </div>
+      {active && active.status === "pending" && (
+        <Card className={cn(bciMode && "border-2")}>
+          <CardHeader>
+            <CardTitle>Confirm top match</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {bciMode &&
+                "Enter confirm · ←/→ cycle · Esc reject · auto-rank prefers #1"}
+            </p>
+            <ul className="space-y-2" role="listbox">
+              {active.candidates.map((c, i) => {
+                const selected = i === active.selectedIndex;
+                return (
+                  <li key={c.cardId}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      onClick={() => selectCandidate(active.id, i)}
+                      className={cn(
+                        "flex w-full items-center gap-4 rounded-2xl border p-4 text-left",
+                        bciMode && "min-h-[5rem] p-5",
+                        selected
+                          ? "border-primary bg-primary/10 ring-2 ring-primary/30"
+                          : "border-border hover:bg-accent/50"
+                      )}
+                    >
+                      <div className="flex h-12 w-10 items-center justify-center rounded-lg bg-muted text-xs font-bold">
+                        #{i + 1}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={cn("font-semibold", bciMode && "text-lg")}>
+                          {c.card.name}
+                        </p>
+                        <p className="truncate text-sm text-muted-foreground">
+                          {c.card.setName} · #{c.card.number} ·{" "}
+                          {rarityLabel(c.card.rarity)}
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          <Badge>{Math.round(c.confidence * 100)}%</Badge>
+                          <Badge variant="secondary">
+                            {c.suggestedCondition}
+                          </Badge>
+                        </div>
+                      </div>
+                      <span className="font-mono font-semibold text-primary">
+                        {formatCurrency(c.card.marketPrice)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="flex flex-wrap gap-2">
+              <Button size={bciMode ? "bci" : "lg"} onClick={() => confirmActive()}>
+                <Check className="h-4 w-4" />
+                Confirm & add
+              </Button>
+              <Button
+                variant="outline"
+                size={bciMode ? "bci" : "lg"}
+                onClick={() => confirmActive("list-trade")}
+              >
+                Add to trade
+              </Button>
+              <Button
+                variant="ghost"
+                size={bciMode ? "bci" : "default"}
+                onClick={() => {
+                  reject(active.id);
+                  playFeedback("error");
+                }}
+              >
+                <X className="h-4 w-4" />
+                Reject
+              </Button>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className={cn(bciMode && "border-2")}>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle>Queue ({pending.length} pending)</CardTitle>
+          <Button size="sm" variant="ghost" onClick={clearDone}>
+            Clear done
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {queue.length === 0 && (
+            <p className="text-sm text-muted-foreground">Queue empty.</p>
           )}
+          {queue.map((q) => {
+            const top = q.candidates[0];
+            return (
+              <button
+                key={q.id}
+                type="button"
+                onClick={() => setActive(q.id)}
+                className={cn(
+                  "flex w-full items-center justify-between rounded-xl border px-3 text-left text-sm",
+                  bciMode ? "py-3" : "py-2",
+                  q.id === active?.id
+                    ? "border-primary bg-primary/10"
+                    : "border-border"
+                )}
+              >
+                <span>
+                  {top?.card.name ?? "Scan"}{" "}
+                  <Badge variant="outline" className="ml-1">
+                    {q.status}
+                  </Badge>
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(q.createdAt).toLocaleTimeString()}
+                </span>
+              </button>
+            );
+          })}
         </CardContent>
       </Card>
     </div>

@@ -2,21 +2,35 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { BciProfile } from "@/lib/types/features";
 
 export type DensityMode = "comfortable" | "bci" | "compact";
 
+const defaultProfile: BciProfile = {
+  targetSize: "large",
+  dwellMs: 800,
+  useDwell: false,
+  confirmTimeoutMs: 2500,
+  scanAutoRankAggressive: true,
+  intentOnlyMode: false,
+  switchScanMs: 1200,
+  soundFeedback: false,
+  calibrated: false,
+};
+
 interface BciState {
-  /** Enlarged targets, reduced density, predictive ranking */
   bciMode: boolean;
   highContrast: boolean;
   reducedMotion: boolean;
   density: DensityMode;
-  /** Index of currently focused item for discrete next/prev navigation */
   focusIndex: number;
-  /** Whether command bar should steal focus (intent: search) */
   commandBarOpen: boolean;
-  /** Voice input enabled as secondary modality */
   voiceEnabled: boolean;
+  intentPaletteOpen: boolean;
+  profile: BciProfile;
+  switchScanEnabled: boolean;
+  online: boolean;
+  queuedOps: number;
 
   setBciMode: (on: boolean) => void;
   toggleBciMode: () => void;
@@ -27,6 +41,12 @@ interface BciState {
   moveFocus: (delta: number, max: number) => void;
   setCommandBarOpen: (open: boolean) => void;
   setVoiceEnabled: (on: boolean) => void;
+  setIntentPaletteOpen: (open: boolean) => void;
+  updateProfile: (p: Partial<BciProfile>) => void;
+  setSwitchScanEnabled: (on: boolean) => void;
+  setOnline: (on: boolean) => void;
+  setQueuedOps: (n: number) => void;
+  playFeedback: (kind: "success" | "error" | "select") => void;
 }
 
 export const useBciStore = create<BciState>()(
@@ -39,6 +59,11 @@ export const useBciStore = create<BciState>()(
       focusIndex: 0,
       commandBarOpen: false,
       voiceEnabled: false,
+      intentPaletteOpen: false,
+      profile: defaultProfile,
+      switchScanEnabled: false,
+      online: true,
+      queuedOps: 0,
 
       setBciMode: (on) =>
         set({
@@ -64,6 +89,32 @@ export const useBciStore = create<BciState>()(
       },
       setCommandBarOpen: (open) => set({ commandBarOpen: open }),
       setVoiceEnabled: (on) => set({ voiceEnabled: on }),
+      setIntentPaletteOpen: (open) => set({ intentPaletteOpen: open }),
+      updateProfile: (p) =>
+        set((s) => ({ profile: { ...s.profile, ...p } })),
+      setSwitchScanEnabled: (on) => set({ switchScanEnabled: on }),
+      setOnline: (on) => set({ online: on }),
+      setQueuedOps: (n) => set({ queuedOps: n }),
+
+      playFeedback: (kind) => {
+        const { profile } = get();
+        if (!profile.soundFeedback || typeof window === "undefined") return;
+        try {
+          const ctx = new AudioContext();
+          const o = ctx.createOscillator();
+          const g = ctx.createGain();
+          o.connect(g);
+          g.connect(ctx.destination);
+          o.frequency.value =
+            kind === "success" ? 880 : kind === "error" ? 220 : 520;
+          g.gain.value = 0.04;
+          o.start();
+          o.stop(ctx.currentTime + 0.08);
+          // ROADMAP: NeuralinkBridgeAdapter.sendFeedback({ type: kind })
+        } catch {
+          /* ignore */
+        }
+      },
     }),
     {
       name: "neurabinder-bci",
@@ -73,6 +124,8 @@ export const useBciStore = create<BciState>()(
         reducedMotion: s.reducedMotion,
         density: s.density,
         voiceEnabled: s.voiceEnabled,
+        profile: s.profile,
+        switchScanEnabled: s.switchScanEnabled,
       }),
     }
   )

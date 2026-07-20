@@ -15,6 +15,9 @@ import {
   variantLabel,
   cn,
 } from "@/lib/utils";
+import { shouldIGrade, valueBreakdown } from "@/lib/market/pricing";
+import { useLotsStore } from "@/lib/stores/lots-store";
+import { useAlertsStore } from "@/lib/stores/alerts-store";
 import { toast } from "sonner";
 
 interface CardDetailPanelProps {
@@ -30,9 +33,21 @@ export function CardDetailPanel({ item, onClose }: CardDetailPanelProps) {
   const lists = useCollectionStore((s) => s.lists);
   const addToList = useCollectionStore((s) => s.addToList);
   const removeFromList = useCollectionStore((s) => s.removeFromList);
+  const lotsForCard = useLotsStore((s) => s.lotsForCard);
+  const addWatch = useAlertsStore((s) => s.addWatch);
+  const addAlert = useAlertsStore((s) => s.addAlert);
 
   const gainPct =
     item.totalCost > 0 ? (item.unrealizedGain / item.totalCost) * 100 : 0;
+  const gradeAdvice = shouldIGrade(item);
+  const breakdown = valueBreakdown(
+    item.card.marketPrice ?? 0,
+    item.condition,
+    item.isGraded,
+    item.gradeCompany,
+    item.grade
+  );
+  const lots = lotsForCard(item.id);
 
   return (
     <div
@@ -129,7 +144,72 @@ export function CardDetailPanel({ item, onClose }: CardDetailPanelProps) {
               <dd className="rounded-lg bg-muted/50 p-2">{item.notes}</dd>
             </div>
           )}
+          <div className="col-span-2 rounded-xl border border-border bg-muted/30 p-3">
+            <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
+              Price breakdown
+            </p>
+            <p className="text-sm">
+              NM market {formatCurrency(breakdown.marketNm)} × condition{" "}
+              {breakdown.conditionMult.toFixed(2)} × grade{" "}
+              {breakdown.gradeMult.toFixed(2)} ={" "}
+              <strong>{formatCurrency(breakdown.unitValue)}</strong>
+            </p>
+          </div>
+          <div className="col-span-2 rounded-xl border border-border p-3">
+            <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
+              Should I grade?
+            </p>
+            <Badge variant={gradeAdvice.recommend ? "success" : "secondary"}>
+              {gradeAdvice.recommend ? "Consider grading" : "Probably hold raw"}
+            </Badge>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {gradeAdvice.reason}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              PSA10 est {formatCurrency(gradeAdvice.projectedPsa10)} · fees ~
+              {formatCurrency(gradeAdvice.estimatedFee)} · net if 10{" "}
+              {formatCurrency(gradeAdvice.netIfTen)}
+            </p>
+          </div>
+          {lots.length > 0 && (
+            <div className="col-span-2">
+              <dt className="text-muted-foreground">Tax lots</dt>
+              <dd className="mt-1 space-y-1 text-sm">
+                {lots.map((l) => (
+                  <div
+                    key={l.id}
+                    className="flex justify-between rounded-lg bg-muted/40 px-2 py-1"
+                  >
+                    <span>
+                      {l.remaining}× @ {formatCurrency(l.unitCost)} + fees{" "}
+                      {formatCurrency(l.fees)}
+                    </span>
+                    <span className="text-muted-foreground">{l.purchasedAt}</span>
+                  </div>
+                ))}
+              </dd>
+            </div>
+          )}
         </dl>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            size={bciMode ? "default" : "sm"}
+            variant="outline"
+            onClick={() => {
+              addWatch(item.cardId, "From collection");
+              addAlert({
+                cardId: item.cardId,
+                cardName: item.card.name,
+                direction: "below",
+                targetPrice: Math.round((item.estimatedValue ?? 0) * 0.9),
+              });
+              toast.success("Watch + drop alert created");
+            }}
+          >
+            Watch for drop
+          </Button>
+        </div>
 
         <div className="mt-4">
           <p className="mb-2 text-xs font-medium text-muted-foreground">
