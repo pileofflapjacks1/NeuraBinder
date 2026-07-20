@@ -1,0 +1,37 @@
+{
+  "name": "NeuraBinder",
+  "short_name": "NeuraBinder",
+  "description": "BCI/Neuralink-native TCG collection and portfolio manager for Pokémon and Lorcana.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0a14",
+  "theme_color": "#8b5cf6",
+  "orientation": "any",
+  "categories": ["utilities", "finance", "games"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Collection",
+      "url": "/collection",
+      "description": "Browse your cards"
+    },
+    {
+      "name": "Scan",
+      "url": "/scan",
+      "description": "Scan a card"
+    }
+  ]
+}
