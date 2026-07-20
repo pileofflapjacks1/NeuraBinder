@@ -63,6 +63,8 @@ function matchesQuery(item: CollectionItem, q: string): boolean {
     item.variant,
     item.condition,
     item.certNumber,
+    item.location,
+    ...(item.tags ?? []),
   ]
     .filter(Boolean)
     .join(" ")
@@ -115,12 +117,22 @@ export function filterCollection(
   if (filters.language) {
     result = result.filter((i) => i.language === filters.language);
   }
-
-  // Master-set missing: return empty owned list is wrong — handled separately
-  // via computeSetProgress. Filter here means "show owned that are in set".
-  if (filters.missingForMasterSet && catalogCards) {
-    // No-op on owned filter; callers use getMissingForSet
+  if (filters.location) {
+    const loc = filters.location.toLowerCase();
+    result = result.filter((i) =>
+      (i.location ?? "").toLowerCase().includes(loc)
+    );
   }
+  if (filters.tags?.length) {
+    result = result.filter((i) =>
+      filters.tags!.every((t) =>
+        (i.tags ?? []).map((x) => x.toLowerCase()).includes(t.toLowerCase())
+      )
+    );
+  }
+
+  // Master-set missing: handled via computeSetProgress / getMissingForSet
+  void catalogCards;
 
   return result;
 }

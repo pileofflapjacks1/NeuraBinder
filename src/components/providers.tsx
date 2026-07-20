@@ -6,12 +6,15 @@ import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { getBciAdapter } from "@/lib/bci/adapter";
+import { registerServiceWorker } from "@/lib/pwa/register-sw";
+import { GuidedTour } from "@/components/tour/guided-tour";
 
 function BciEffects() {
   const bciMode = useBciStore((s) => s.bciMode);
   const highContrast = useBciStore((s) => s.highContrast);
   const reducedMotion = useBciStore((s) => s.reducedMotion);
   const setCommandBarOpen = useBciStore((s) => s.setCommandBarOpen);
+  const setIntentPaletteOpen = useBciStore((s) => s.setIntentPaletteOpen);
   const moveFocus = useBciStore((s) => s.moveFocus);
 
   useEffect(() => {
@@ -23,13 +26,15 @@ function BciEffects() {
   }, [bciMode, highContrast, reducedMotion]);
 
   useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
+  useEffect(() => {
     if (!bciMode) return;
     const adapter = getBciAdapter();
     return adapter.onIntent((intent) => {
-      // Global intent routing — pages can also subscribe
       if (intent === "search") {
         setCommandBarOpen(true);
-        // Focus command bar
         requestAnimationFrame(() => {
           document.getElementById("nl-command-input")?.focus();
         });
@@ -38,10 +43,11 @@ function BciEffects() {
       if (intent === "prev") moveFocus(-1, 9999);
       if (intent === "cancel") {
         setCommandBarOpen(false);
+        setIntentPaletteOpen(false);
         (document.activeElement as HTMLElement | null)?.blur?.();
       }
     });
-  }, [bciMode, setCommandBarOpen, moveFocus]);
+  }, [bciMode, setCommandBarOpen, setIntentPaletteOpen, moveFocus]);
 
   return null;
 }
@@ -60,6 +66,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <QueryClientProvider client={client}>
         <BciEffects />
+        <GuidedTour />
         {children}
         <Toaster
           theme="system"

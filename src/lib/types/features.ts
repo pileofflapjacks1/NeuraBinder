@@ -158,6 +158,52 @@ export interface RecentAction {
   at: string;
 }
 
+export interface PortfolioSnapshot {
+  id: string;
+  at: string;
+  totalValue: number;
+  totalCost: number;
+  cardCount: number;
+  uniqueCount: number;
+  source: "manual" | "market_refresh" | "auto";
+}
+
+export interface SavedViewLocal {
+  id: string;
+  name: string;
+  filters: import("./index").CollectionFilters;
+  sort: import("./index").CollectionSort;
+  createdAt: string;
+}
+
+/** Full local backup payload */
+export interface NeuraBinderBackup {
+  version: 1;
+  exportedAt: string;
+  collection: {
+    userCards: import("./index").UserCard[];
+    lists: import("./index").CardList[];
+    wantCardIds: string[];
+    filters?: import("./index").CollectionFilters;
+    sort?: import("./index").CollectionSort;
+  };
+  lots?: InventoryLot[];
+  alerts?: PriceAlert[];
+  watchlist?: WatchItem[];
+  savedViews?: SavedViewLocal[];
+  snapshots?: PortfolioSnapshot[];
+  bci?: Record<string, unknown>;
+}
+
+export interface TradePackageLine {
+  userCardId?: string;
+  cardId: string;
+  name: string;
+  quantity: number;
+  unitValue: number;
+  side: "offer" | "want";
+}
+
 export type ImportFormat = "neurabinder" | "tcgplayer" | "collectr" | "auto";
 
 export interface ImportRow {

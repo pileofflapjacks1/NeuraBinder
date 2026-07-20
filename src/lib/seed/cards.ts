@@ -543,6 +543,8 @@ export const SEED_USER_CARDS: UserCard[] = [
     isGraded: false,
     purchasePrice: 42,
     purchaseDate: "2024-06-12",
+    location: "Binder 1 · p.2",
+    tags: ["151", "IR"],
   }),
   uc({
     id: "uc-2",
@@ -559,6 +561,8 @@ export const SEED_USER_CARDS: UserCard[] = [
     purchaseDate: "2024-08-01",
     notes: "Centered well, investment hold",
     listIds: ["list-collection", "list-investment"],
+    location: "Slab box A",
+    tags: ["grail", "investment"],
   }),
   uc({
     id: "uc-3",

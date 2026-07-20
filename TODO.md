@@ -125,6 +125,23 @@ Do **not** block local features on these. When ready:
 
 ---
 
+## Slice 2 — local power tools (done)
+
+- [x] Undo / redo (⌘Z / ⌘⇧Z) for collection mutations
+- [x] Bulk select + bulk condition / list / tag / location / delete
+- [x] Saved views (named filter presets)
+- [x] JSON backup download + restore
+- [x] Portfolio snapshots + value-over-time chart
+- [x] Physical location + tags on cards (filter + detail edit)
+- [x] Trade package calculator (`/trade/calculator`)
+- [x] Fuse.js fuzzy search on collection + catalog
+- [x] Virtualized collection grid (`@tanstack/react-virtual`)
+- [x] Service worker offline shell (`public/sw.js`, prod only)
+- [x] Dwell-to-select (when calibrated / useDwell on)
+- [x] Guided first-run tour (+ replay in Settings)
+
+---
+
 ## Implementation notes
 
 - Prefer **local-first**: Zustand + localStorage + IndexedDB.

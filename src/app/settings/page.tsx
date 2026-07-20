@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { useCollectionStore } from "@/lib/stores/collection-store";
+import { useSnapshotsStore } from "@/lib/stores/snapshots-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { BackupPanel } from "@/components/backup/backup-panel";
+import { startGuidedTour } from "@/components/tour/guided-tour";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -26,6 +29,8 @@ export default function SettingsPage() {
   const setSwitchScanEnabled = useBciStore((s) => s.setSwitchScanEnabled);
   const resetToSeed = useCollectionStore((s) => s.resetToSeed);
   const refreshMarketPrices = useCollectionStore((s) => s.refreshMarketPrices);
+  const getPortfolio = useCollectionStore((s) => s.getPortfolio);
+  const addSnapshot = useSnapshotsStore((s) => s.addSnapshot);
 
   const row = (
     id: string,
@@ -244,16 +249,32 @@ export default function SettingsPage() {
             Local-first: Zustand + localStorage + IndexedDB queue. Cloud sync
             waits on Supabase/Clerk setup (see TODO.md).
           </p>
+          <BackupPanel />
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size={bciMode ? "bci" : "default"}
               onClick={() => {
                 refreshMarketPrices();
-                toast.success("Mock market prices refreshed");
+                const p = getPortfolio();
+                addSnapshot({
+                  totalValue: p.totalValue,
+                  totalCost: p.totalCost,
+                  cardCount: p.cardCount,
+                  uniqueCount: p.uniqueCount,
+                  source: "market_refresh",
+                });
+                toast.success("Mock market prices refreshed + snapshot");
               }}
             >
               Refresh mock market
+            </Button>
+            <Button
+              variant="secondary"
+              size={bciMode ? "bci" : "default"}
+              onClick={() => startGuidedTour()}
+            >
+              Replay guided tour
             </Button>
             <Button
               variant="destructive"

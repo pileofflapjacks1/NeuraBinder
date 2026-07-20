@@ -6,6 +6,8 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Line,
+  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -15,10 +17,12 @@ import {
 } from "recharts";
 import { useCollectionStore } from "@/lib/stores/collection-store";
 import { useLotsStore } from "@/lib/stores/lots-store";
+import { useSnapshotsStore } from "@/lib/stores/snapshots-store";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency, formatPct } from "@/lib/utils";
+import { toast } from "sonner";
 
 const COLORS = [
   "#8b5cf6",
@@ -40,6 +44,25 @@ export function PortfolioDashboard() {
   const items = useMemo(() => getItems(), [getItems, userCards]);
   const lots = useLotsStore((s) => s.lots);
   const totalLotCost = useLotsStore((s) => s.totalLotCost);
+  const snapshots = useSnapshotsStore((s) => s.snapshots);
+  const addSnapshot = useSnapshotsStore((s) => s.addSnapshot);
+
+  const historyData = snapshots.map((s) => ({
+    date: s.at.slice(0, 10),
+    value: Math.round(s.totalValue * 100) / 100,
+    cost: Math.round(s.totalCost * 100) / 100,
+  }));
+
+  const takeSnapshot = (source: "manual" | "market_refresh" | "auto" = "manual") => {
+    addSnapshot({
+      totalValue: portfolio.totalValue,
+      totalCost: portfolio.totalCost,
+      cardCount: portfolio.cardCount,
+      uniqueCount: portfolio.uniqueCount,
+      source,
+    });
+    if (source === "manual") toast.success("Portfolio snapshot saved");
+  };
 
   const gameData = Object.entries(portfolio.byGame).map(([name, value]) => ({
     name,
@@ -132,9 +155,18 @@ export function PortfolioDashboard() {
             prices
           </p>
         </div>
-        <Button size={bciMode ? "bci" : "default"} variant="outline" onClick={exportCsv}>
-          Export CSV
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size={bciMode ? "bci" : "default"}
+            variant="secondary"
+            onClick={() => takeSnapshot("manual")}
+          >
+            Snapshot now
+          </Button>
+          <Button size={bciMode ? "bci" : "default"} variant="outline" onClick={exportCsv}>
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -152,6 +184,50 @@ export function PortfolioDashboard() {
           `${portfolio.uniqueCount} unique · ${portfolio.gradedCount} graded`
         )}
       </div>
+
+      <Card className={cn(bciMode && "border-2")}>
+        <CardHeader>
+          <CardTitle>
+            Value over time ({snapshots.length} snapshots)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="h-64">
+          {historyData.length < 2 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+              <p>Need at least 2 snapshots for a trend line.</p>
+              <Button size="sm" onClick={() => takeSnapshot("manual")}>
+                Save first snapshot
+              </Button>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={historyData}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#8b5cf6"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  name="Value"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="cost"
+                  stroke="#64748b"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  dot={false}
+                  name="Cost"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className={cn(bciMode && "border-2")}>

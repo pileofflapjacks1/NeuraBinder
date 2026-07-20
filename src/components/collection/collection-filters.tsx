@@ -110,15 +110,53 @@ export function CollectionFilters() {
           htmlFor="filter-search"
           className="mb-2 block text-xs font-medium text-muted-foreground"
         >
-          Search
+          Fuzzy search
         </label>
         <Input
           id="filter-search"
           bci={bciMode}
-          placeholder="Name, set, notes…"
+          placeholder="Name, set, tags, location…"
           value={filters.query ?? ""}
           onChange={(e) =>
             setFilters({ query: e.target.value || undefined })
+          }
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="filter-location"
+          className="mb-2 block text-xs font-medium text-muted-foreground"
+        >
+          Location
+        </label>
+        <Input
+          id="filter-location"
+          bci={bciMode}
+          placeholder="e.g. Binder 2"
+          value={filters.location ?? ""}
+          onChange={(e) =>
+            setFilters({ location: e.target.value || undefined })
+          }
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="filter-tag"
+          className="mb-2 block text-xs font-medium text-muted-foreground"
+        >
+          Tag
+        </label>
+        <Input
+          id="filter-tag"
+          bci={bciMode}
+          placeholder="e.g. grail"
+          value={filters.tags?.[0] ?? ""}
+          onChange={(e) =>
+            setFilters({
+              tags: e.target.value ? [e.target.value] : undefined,
+            })
           }
         />
       </div>

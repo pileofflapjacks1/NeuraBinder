@@ -192,6 +192,46 @@ export function CardDetailPanel({ item, onClose }: CardDetailPanelProps) {
           )}
         </dl>
 
+        <div className="mt-4 space-y-2">
+          <label className="block text-xs text-muted-foreground">
+            Location
+            <input
+              className={cn(
+                "mt-1 w-full rounded-xl border border-input bg-background px-3 text-sm",
+                bciMode ? "h-12" : "h-9"
+              )}
+              defaultValue={item.location ?? ""}
+              placeholder="Binder 2 · page 3"
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v !== (item.location ?? "")) {
+                  updateCard(item.id, { location: v || undefined });
+                  toast.message("Location updated");
+                }
+              }}
+            />
+          </label>
+          <label className="block text-xs text-muted-foreground">
+            Tags (comma-separated)
+            <input
+              className={cn(
+                "mt-1 w-full rounded-xl border border-input bg-background px-3 text-sm",
+                bciMode ? "h-12" : "h-9"
+              )}
+              defaultValue={(item.tags ?? []).join(", ")}
+              placeholder="grail, playable"
+              onBlur={(e) => {
+                const tags = e.target.value
+                  .split(",")
+                  .map((t) => t.trim())
+                  .filter(Boolean);
+                updateCard(item.id, { tags });
+                toast.message("Tags updated");
+              }}
+            />
+          </label>
+        </div>
+
         <div className="mt-4 flex flex-wrap gap-2">
           <Button
             size={bciMode ? "default" : "sm"}

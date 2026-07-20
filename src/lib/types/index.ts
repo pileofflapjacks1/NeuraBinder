@@ -105,6 +105,10 @@ export interface UserCard {
   purchaseDate?: string;
   notes?: string;
   listIds: string[];
+  /** Physical storage location (binder, box, shelf…) */
+  location?: string;
+  /** Free-form tags e.g. grail, playable, JP */
+  tags?: string[];
   /** Current estimated market value (per unit) */
   estimatedValue?: number;
   createdAt: string;
@@ -193,6 +197,8 @@ export interface CollectionFilters {
   listId?: string;
   missingForMasterSet?: string; // setId
   language?: string;
+  location?: string;
+  tags?: string[];
 }
 
 export type CollectionSortField =

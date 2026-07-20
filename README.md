@@ -19,6 +19,16 @@
 - **Watch & intel** — price alerts, watchlist, mock market refresh (`/watch`)
 - **Portfolio + tax lots** — charts, CSV export, lot cost basis
 - **Offline queue** — IndexedDB ops when offline; auto-flush online
+- **Undo/redo** — ⌘Z / ⌘⇧Z for collection edits
+- **Bulk select** — multi-edit condition, tags, location, lists
+- **Saved views** — named filter presets on collection
+- **JSON backup/restore** — Settings → download/restore full local state
+- **Portfolio snapshots** — value-over-time chart (local history)
+- **Locations + tags** — physical storage + free tags
+- **Trade package calculator** — `/trade/calculator`
+- **Fuzzy search + virtualized grid** — Fuse.js + TanStack Virtual
+- **Service worker** — offline shell in production builds
+- **Dwell-to-select + guided tour** — BCI calibration path
 - See **TODO.md** for full backlog and external blockers
 
 ---

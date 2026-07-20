@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { useAlertsStore } from "@/lib/stores/alerts-store";
 import { useCollectionStore } from "@/lib/stores/collection-store";
+import { useSnapshotsStore } from "@/lib/stores/snapshots-store";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { SEED_EVENTS } from "@/lib/seed/events";
 import { Button } from "@/components/ui/button";
@@ -48,14 +49,25 @@ export default function WatchPage() {
       .slice(0, 8);
   }, [items]);
 
+  const addSnapshot = useSnapshotsStore((s) => s.addSnapshot);
+  const getPortfolio = useCollectionStore((s) => s.getPortfolio);
+
   const refresh = () => {
     refreshMarketPrices();
     const triggered = evaluateAlerts(useCollectionStore.getState().catalog);
+    const p = getPortfolio();
+    addSnapshot({
+      totalValue: p.totalValue,
+      totalCost: p.totalCost,
+      cardCount: p.cardCount,
+      uniqueCount: p.uniqueCount,
+      source: "market_refresh",
+    });
     playFeedback(triggered.length ? "success" : "select");
     toast.message(
       triggered.length
         ? `${triggered.length} alert(s) triggered`
-        : "Market refreshed (local mock drift)"
+        : "Market refreshed + portfolio snapshot"
     );
   };
 

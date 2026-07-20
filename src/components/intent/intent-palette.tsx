@@ -71,6 +71,14 @@ const ACTIONS = [
     intent: "trade",
   },
   {
+    id: "trade-calc",
+    label: "Trade calculator",
+    hint: "Balance offer vs want packages",
+    href: "/trade/calculator",
+    icon: CircleDollarSign,
+    intent: "trade",
+  },
+  {
     id: "lists",
     label: "Lists",
     hint: "Want, trade, investment",

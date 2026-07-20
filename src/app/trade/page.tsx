@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useCollectionStore } from "@/lib/stores/collection-store";
 import { useBciStore } from "@/lib/stores/bci-store";
 import {
@@ -51,6 +52,9 @@ export default function TradePage() {
         <p className="text-sm text-muted-foreground">
           Local peer matching (demo collectors). Global network needs auth later.
         </p>
+        <Button asChild size={bciMode ? "bci" : "default"} className="mt-3" variant="outline">
+          <Link href="/trade/calculator">Open package calculator</Link>
+        </Button>
       </div>
 
       {shareList && (
