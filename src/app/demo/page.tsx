@@ -18,11 +18,13 @@ import {
 } from "lucide-react";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { useCollectionStore } from "@/lib/stores/collection-store";
+import { useShowcaseStore } from "@/lib/stores/showcase-store";
 import {
   DEMO_CLASS_LABELS,
   genericIntentBus,
   type GenericIntentEvent,
 } from "@/lib/bci/generic-intent";
+import { IntentSocketPanel } from "@/components/showcase/intent-socket-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +38,8 @@ export default function DemoPage() {
   const setCommandBarOpen = useBciStore((s) => s.setCommandBarOpen);
   const updateProfile = useBciStore((s) => s.updateProfile);
   const playFeedback = useBciStore((s) => s.playFeedback);
+  const enableShowcase = useShowcaseStore((s) => s.enable);
+  const showcase = useShowcaseStore((s) => s.enabled);
   const portfolio = useCollectionStore((s) => s.getPortfolio());
   const userCards = useCollectionStore((s) => s.userCards);
   void userCards;
@@ -44,14 +48,20 @@ export default function DemoPage() {
   const [lastIntent, setLastIntent] = useState<string>("—");
 
   useEffect(() => {
-    // Enable a demo-friendly BCI profile on first visit to /demo
+    // Full showcase: seed lock + BCI + intent transports
+    enableShowcase({
+      lockData: true,
+      autoTour: false,
+      autoIntentSocket: true,
+      bannerLabel: "Showcase · /demo hero path",
+    });
     setBciMode(true);
     updateProfile({
       soundFeedback: true,
       scanAutoRankAggressive: true,
       targetSize: "large",
     });
-  }, [setBciMode, updateProfile]);
+  }, [setBciMode, updateProfile, enableShowcase]);
 
   useEffect(() => {
     return genericIntentBus.subscribe((ev: GenericIntentEvent) => {
@@ -83,6 +93,7 @@ export default function DemoPage() {
           <Badge variant={bciMode ? "success" : "secondary"}>
             BCI Mode {bciMode ? "ON" : "off"}
           </Badge>
+          {showcase && <Badge variant="warning">Showcase locked</Badge>}
         </div>
         <h1
           className={cn(
@@ -130,11 +141,13 @@ export default function DemoPage() {
         </Card>
       </section>
 
+      <IntentSocketPanel />
+
       <Card className={cn(bciMode && "border-2")} data-tour="demo-bci">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
-            1 · Enable BCI Mode (already on for this page)
+            1 · BCI Mode + showcase (active on this page)
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">

@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { BackupPanel } from "@/components/backup/backup-panel";
 import { startGuidedTour } from "@/components/tour/guided-tour";
+import { useShowcaseStore } from "@/lib/stores/showcase-store";
+import { IntentSocketPanel } from "@/components/showcase/intent-socket-panel";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -31,6 +33,10 @@ export default function SettingsPage() {
   const refreshMarketPrices = useCollectionStore((s) => s.refreshMarketPrices);
   const getPortfolio = useCollectionStore((s) => s.getPortfolio);
   const addSnapshot = useSnapshotsStore((s) => s.addSnapshot);
+  const showcase = useShowcaseStore((s) => s.enabled);
+  const lockData = useShowcaseStore((s) => s.lockData);
+  const enableShowcase = useShowcaseStore((s) => s.enable);
+  const disableShowcase = useShowcaseStore((s) => s.disable);
 
   const row = (
     id: string,
@@ -279,7 +285,17 @@ export default function SettingsPage() {
             <Button
               variant="destructive"
               size={bciMode ? "bci" : "default"}
+              disabled={showcase && lockData}
+              title={
+                showcase && lockData
+                  ? "Disabled in showcase mode (data locked)"
+                  : undefined
+              }
               onClick={() => {
+                if (showcase && lockData) {
+                  toast.error("Exit showcase mode to reset data");
+                  return;
+                }
                 resetToSeed();
                 toast.success("Collection reset to demo seed");
               }}
@@ -287,6 +303,22 @@ export default function SettingsPage() {
               Reset demo collection
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className={cn(bciMode && "border-2")}>
+        <CardHeader>
+          <CardTitle>Showcase & intent socket</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {row(
+            "showcase",
+            "Showcase mode",
+            "BCI on, seed data locked, intent socket listening — for Neurabeach demos",
+            showcase,
+            (v) => (v ? enableShowcase() : disableShowcase())
+          )}
+          <IntentSocketPanel />
         </CardContent>
       </Card>
     </div>

@@ -2,7 +2,7 @@
 
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { getBciAdapter } from "@/lib/bci/adapter";
@@ -10,6 +10,7 @@ import { onInjectedIntent } from "@/lib/bci/generic-intent";
 import type { BciIntent } from "@/lib/types";
 import { registerServiceWorker } from "@/lib/pwa/register-sw";
 import { GuidedTour } from "@/components/tour/guided-tour";
+import { ShowcaseController } from "@/components/showcase/showcase-controller";
 
 function routeIntent(
   intent: BciIntent,
@@ -89,6 +90,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <QueryClientProvider client={client}>
         <BciEffects />
+        <Suspense fallback={null}>
+          <ShowcaseController />
+        </Suspense>
         <GuidedTour />
         {children}
         <Toaster

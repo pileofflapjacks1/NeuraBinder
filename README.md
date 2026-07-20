@@ -4,8 +4,9 @@
 
 > **Computer-side web app only.** Not implant software. Not a medical device. **Not affiliated with** Neuralink, The Pokémon Company, or Disney. Accessibility prototyping and suite demo.
 
-**Version:** 0.2.0  
-**Hero demo path:** [`/demo`](./src/app/demo/page.tsx) (synthetic intents + BCI Mode, no accounts)
+**Version:** 0.2.1  
+**Hero demo path:** [`/demo`](./src/app/demo/page.tsx) · **Showcase:** `?showcase=1`  
+**Intent socket:** [docs/INTENT_SOCKET.md](./docs/INTENT_SOCKET.md)
 
 ---
 
@@ -39,13 +40,15 @@ pnpm dev
 
 | URL | Purpose |
 |-----|---------|
-| http://localhost:3000/demo | **Public showcase** — BCI Mode + synthetic intent buttons |
+| http://localhost:3000/demo | **Public showcase** — BCI Mode + intent socket console |
+| http://localhost:3000/?showcase=1 | Showcase mode (seed lock + banner) |
 | http://localhost:3000/collection | Full collection UI |
 | http://localhost:3000 | Home |
 
 ```bash
 pnpm build    # must succeed for ship
 pnpm start    # production server
+pnpm intent:ws  # optional local NeuralBridge-shaped WS on :7843
 pnpm lint
 ```
 

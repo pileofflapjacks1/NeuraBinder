@@ -18,11 +18,14 @@ import { useBciStore } from "@/lib/stores/bci-store";
 import { CommandBar } from "@/components/command/command-bar";
 import { IntentPalette } from "@/components/intent/intent-palette";
 import { OfflineBanner } from "@/components/layout/offline-banner";
+import { ShowcaseBanner } from "@/components/showcase/showcase-banner";
+import { useShowcaseStore } from "@/lib/stores/showcase-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const NAV = [
   { href: "/", label: "Home", icon: LayoutGrid },
+  { href: "/demo", label: "Demo", icon: Sparkles },
   { href: "/collection", label: "Collection", icon: Library },
   { href: "/scan", label: "Scan", icon: Camera },
   { href: "/portfolio", label: "Portfolio", icon: LineChart },
@@ -37,6 +40,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const setCommandBarOpen = useBciStore((s) => s.setCommandBarOpen);
   const setIntentPaletteOpen = useBciStore((s) => s.setIntentPaletteOpen);
   const profile = useBciStore((s) => s.profile);
+  const showcase = useShowcaseStore((s) => s.enabled);
+  const enableShowcase = useShowcaseStore((s) => s.enable);
 
   const targetClass =
     profile.targetSize === "xl"
@@ -60,6 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </a>
 
       <OfflineBanner />
+      <ShowcaseBanner />
       <IntentPalette />
 
       <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-md">
@@ -139,13 +145,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </kbd>
             </Button>
 
+            {!showcase && (
+              <Button
+                variant="ghost"
+                size={bciMode ? "bci" : "sm"}
+                onClick={() =>
+                  enableShowcase({
+                    lockData: true,
+                    autoTour: false,
+                    autoIntentSocket: true,
+                  })
+                }
+                className="hidden md:inline-flex"
+                title="Showcase mode for Neurabeach demos"
+              >
+                Showcase
+              </Button>
+            )}
             <Button
               variant={bciMode ? "default" : "outline"}
               size={bciMode ? "bci" : "sm"}
               onClick={toggleBciMode}
               aria-pressed={bciMode}
               aria-label={
-                bciMode ? "Disable BCI Mode" : "Enable Neuralink / BCI Mode"
+                bciMode ? "Disable BCI Mode" : "Enable BCI Mode"
               }
             >
               <Brain className="h-4 w-4" />

@@ -2,8 +2,8 @@
   "manifest_version": "1.0.0",
   "name": "neurabinder",
   "display_name": "NeuraBinder",
-  "version": "0.2.0",
-  "description": "BCI-inspired TCG collection & portfolio manager (Pokémon TCG, Lorcana) with intent palette, synthetic intent demo, dwell/switch modes, and low-clutter UI. Computer-side web app — not implant software.",
+  "version": "0.2.1",
+  "description": "BCI-inspired TCG collection & portfolio manager with showcase mode, /demo hero path, and NeuralBridge-shaped intent socket (postMessage/WS). Computer-side web app — not implant software.",
   "safety_class": "computer_side",
   "runtime": "web",
   "inputs": [

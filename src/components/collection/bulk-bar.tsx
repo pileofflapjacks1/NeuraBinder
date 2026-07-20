@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import type { CardCondition } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useShowcaseStore } from "@/lib/stores/showcase-store";
 
 const CONDITIONS: CardCondition[] = ["NM", "LP", "MP", "HP", "DMG"];
 
 export function BulkBar() {
   const bciMode = useBciStore((s) => s.bciMode);
+  const showcaseLock = useShowcaseStore((s) => s.enabled && s.lockData);
   const bulkMode = useCollectionStore((s) => s.bulkMode);
   const selectedIds = useCollectionStore((s) => s.selectedIds);
   const setBulkMode = useCollectionStore((s) => s.setBulkMode);
@@ -152,8 +154,13 @@ export function BulkBar() {
       <Button
         size="sm"
         variant="destructive"
-        disabled={!selectedIds.length}
+        disabled={!selectedIds.length || showcaseLock}
+        title={showcaseLock ? "Disabled in showcase mode" : undefined}
         onClick={() => {
+          if (showcaseLock) {
+            toast.error("Exit showcase to delete");
+            return;
+          }
           if (confirm(`Remove ${selectedIds.length} cards?`)) {
             bulkRemove(selectedIds);
             toast.success("Removed");
