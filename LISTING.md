@@ -1,15 +1,17 @@
 # Neurabeach listing copy (NeuraBinder)
 
-Use this when editing the catalog listing or re-seeding Neurabeach.
+Source of truth for catalog re-seed. Keep in sync with Neurabeach `seed-proj-neurabinder`.
 
 | Field | Value |
 |-------|--------|
 | **Slug** | `neurabinder` |
 | **Title** | NeuraBinder |
-| **Version** | `0.2.3` |
+| **Version** | `0.3.0` |
 | **Category** | accessibility |
 | **Featured** | yes |
 | **Collection** | `col-neura-suite` |
+| **Suite role** | `app` |
+| **Depends on** | `neuralbridge` |
 | **GitHub** | https://github.com/pileofflapjacks1/NeuraBinder |
 | **Live demo** | https://neura-binder.vercel.app/demo |
 | **A11y** | https://neura-binder.vercel.app/a11y |
@@ -17,7 +19,7 @@ Use this when editing the catalog listing or re-seeding Neurabeach.
 
 ## Short description
 
-> BCI-inspired TCG collection & portfolio manager (Pokémon TCG, Lorcana): live /demo with intent palette, showcase path, record/replay, and accessibility scorecard. Computer-side only.
+> BCI-inspired TCG binder with live /demo, BCI Mode, and first-class NeuralBridge integration (in-app simulator or multi-client service). Computer-side only — reference suite app.
 
 ## Screenshots (public URLs)
 
@@ -29,8 +31,22 @@ Use this when editing the catalog listing or re-seeding Neurabeach.
 
 ## Safety blurb (required)
 
-Computer-side web app only. Not implant software. Not affiliated with Neuralink, The Pokémon Company, or Disney. Accessibility prototyping and generic intent streams.
+Computer-side web app only. Not implant software. Not affiliated with Neuralink, The Pokémon Company, or Disney. Accessibility prototyping and generic intent streams (class_label, switch_binary, velocity_2d, synthetic).
 
 ## Tags
 
-`typescript` `nextjs` `bci-mode` `accessibility` `tcg` `intent-v1` `web` `neura-suite` `neurabinder` `pwa` `showcase`
+`typescript` `nextjs` `bci-mode` `accessibility` `tcg` `intent-v1` `web` `neura-suite` `neurabinder` `pwa` `showcase` `neuralbridge`
+
+## Manifest highlights
+
+```json
+{
+  "suite_role": "app",
+  "depends_on": ["neuralbridge"],
+  "entrypoint": "https://neura-binder.vercel.app/demo",
+  "safety_class": "computer_side",
+  "runtime": "web"
+}
+```
+
+Local install still uses `pnpm install && pnpm dev` (see README). Catalog **entrypoint** is the public live demo.

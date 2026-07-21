@@ -4,9 +4,10 @@
 
 > **Computer-side web app only.** Not implant software. Not a medical device. **Not affiliated with** Neuralink, The Pokémon Company, or Disney. Accessibility prototyping and suite demo.
 
-**Version:** 0.2.2  
-**Hero demo:** [`/demo`](./src/app/demo/page.tsx) · **Showcase:** `?showcase=1` · **A11y:** [`/a11y`](./src/app/a11y/page.tsx)  
-**Intent socket:** [docs/INTENT_SOCKET.md](./docs/INTENT_SOCKET.md)  
+**Version:** 0.3.0  
+**Live demo:** [neura-binder.vercel.app/demo](https://neura-binder.vercel.app/demo) · **A11y:** [/a11y](https://neura-binder.vercel.app/a11y)  
+**Suite role:** app (`depends_on: neuralbridge`) · **Manifest:** [`neurabeach-manifest.json`](./neurabeach-manifest.json) · **Listing:** [`LISTING.md`](./LISTING.md)  
+**Intent / NeuralBridge:** [docs/INTENT_SOCKET.md](./docs/INTENT_SOCKET.md) · Settings → NeuralBridge in the app  
 **Screenshots:** [`public/screenshots/`](./public/screenshots/) · **OG:** [`public/og/demo.svg`](./public/og/demo.svg)
 
 ---
@@ -26,6 +27,9 @@ Package contract: **[`neurabeach-manifest.json`](./neurabeach-manifest.json)**
 |-------|--------|
 | `safety_class` | `computer_side` |
 | `runtime` | `web` |
+| `suite_role` | `app` |
+| `depends_on` | `neuralbridge` |
+| `entrypoint` | https://neura-binder.vercel.app/demo |
 | `inputs` | `class_label`, `switch_binary`, `velocity_2d`, `synthetic` |
 | `banned_claims` | `true` |
 
@@ -34,23 +38,25 @@ Package contract: **[`neurabeach-manifest.json`](./neurabeach-manifest.json)**
 ## Quick start
 
 ```bash
-cd ~/Projects/neurabinder   # or /Users/joe/Projects/neurabinder
+git clone https://github.com/pileofflapjacks1/NeuraBinder
+cd NeuraBinder
 pnpm install
 pnpm dev
 ```
 
 | URL | Purpose |
 |-----|---------|
-| http://localhost:3000/demo | **Public showcase** — scripted path, record/replay, intents |
+| https://neura-binder.vercel.app/demo | **Public live demo** (no account) |
+| http://localhost:3000/demo | Local showcase — BCI Mode, intents, record/replay |
 | http://localhost:3000/a11y | Accessibility scorecard |
-| http://localhost:3000/?showcase=1 | Showcase mode (seed lock + banner) |
-| http://localhost:3000/collection | Full collection UI |
-| http://localhost:3000 | Home |
+| Settings → **NeuralBridge** | In-app simulator or multi-client service (`ws://127.0.0.1:7711`) |
 
 ```bash
 pnpm build    # must succeed for ship
 pnpm start    # production server
-pnpm intent:ws  # optional local NeuralBridge-shaped WS on :7843
+# Optional: NeuralBridge multi-client bus (from neuralbridge checkout)
+#   npm run service   → ws://127.0.0.1:7711
+pnpm intent:ws  # legacy local intent WS on :7843
 pnpm lint
 ```
 
