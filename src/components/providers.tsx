@@ -26,13 +26,52 @@ function routeIntent(
     requestAnimationFrame(() => {
       document.getElementById("nl-command-input")?.focus();
     });
+    return;
   }
-  if (intent === "next") deps.moveFocus(1, 9999);
-  if (intent === "prev") deps.moveFocus(-1, 9999);
+  if (intent === "next") {
+    deps.moveFocus(1, 9999);
+    return;
+  }
+  if (intent === "prev") {
+    deps.moveFocus(-1, 9999);
+    return;
+  }
   if (intent === "cancel") {
     deps.setCommandBarOpen(false);
     deps.setIntentPaletteOpen(false);
     (document.activeElement as HTMLElement | null)?.blur?.();
+    return;
+  }
+  if (intent === "back") {
+    deps.setCommandBarOpen(false);
+    deps.setIntentPaletteOpen(false);
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    }
+    return;
+  }
+  // select / confirm → activate focused control (mouse-equivalent)
+  if (intent === "select" || intent === "confirm") {
+    const el = document.activeElement as HTMLElement | null;
+    if (el && typeof el.click === "function") {
+      // Prefer explicit buttons / links / dwell targets
+      const tag = el.tagName?.toLowerCase();
+      if (
+        tag === "button" ||
+        tag === "a" ||
+        el.getAttribute("role") === "button" ||
+        el.dataset?.nbTarget != null ||
+        el.classList?.contains("dwell-target")
+      ) {
+        el.click();
+      } else {
+        // Try nearest button in focus trap
+        const btn = el.closest?.("button, a[href], [role='button']") as
+          | HTMLElement
+          | null;
+        btn?.click?.();
+      }
+    }
   }
 }
 

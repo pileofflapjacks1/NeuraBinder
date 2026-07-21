@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Local suite package (file:../neuralbridge)
+  transpilePackages: ["neuralbridge"],
   // Avoid monorepo lockfile root inference warning when ~/package-lock.json exists
   turbopack: {
     root: process.cwd(),

@@ -15,6 +15,7 @@ import { BackupPanel } from "@/components/backup/backup-panel";
 import { startGuidedTour } from "@/components/tour/guided-tour";
 import { useShowcaseStore } from "@/lib/stores/showcase-store";
 import { IntentSocketPanel } from "@/components/showcase/intent-socket-panel";
+import { NeuralBridgePanel } from "@/components/bci/neuralbridge-panel";
 import { unregisterServiceWorkers } from "@/lib/pwa/register-sw";
 import { ProfileSwitcher } from "@/components/profile/profile-switcher";
 import { useProfileStore } from "@/lib/stores/profile-store";
@@ -166,6 +167,8 @@ export default function SettingsPage() {
           </ul>
         </CardContent>
       </Card>
+
+      <NeuralBridgePanel />
 
       <Card className={cn(bciMode && "border-2")}>
         <CardHeader>

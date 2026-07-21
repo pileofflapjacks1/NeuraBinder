@@ -16,7 +16,7 @@
 | Piece | Role |
 |-------|------|
 | **Neurabeach** | Catalog / storefront — listing slug **`neurabinder`**, collection **`col-neura-suite`** |
-| **NeuralBridge** | Intent middleware (simulator-first) — future bus for streams |
+| **NeuralBridge** | Intent middleware — Settings → NeuralBridge (simulator or multi-client service) |
 | **NeuraBinder** | This app — end-user web MVP |
 | **Intent → OS** | Reference adapter (separate package) |
 

@@ -6,9 +6,26 @@ Computer-side / simulation only. Compatible with **NeuralBridge**-shaped generic
 
 | Transport | How |
 |-----------|-----|
+| **NeuralBridge** (preferred suite bus) | Settings → **NeuralBridge**: in-app **simulator** or **remote** `neuralbridge serve` (`ws://127.0.0.1:7711`) |
 | `window.postMessage` | Parent iframe / Neurabeach embed |
 | `BroadcastChannel("neurabinder-intent")` | Multi-tab loopback |
-| WebSocket | `pnpm intent:ws` → `ws://127.0.0.1:7843` or `NEXT_PUBLIC_INTENT_WS_URL` |
+| WebSocket (legacy intent socket) | `pnpm intent:ws` → `ws://127.0.0.1:7843` or `NEXT_PUBLIC_INTENT_WS_URL` |
+
+### NeuralBridge (multi-client)
+
+```bash
+# Terminal 1 — shared suite service
+cd ~/Projects/neuralbridge && npm run service
+
+# Terminal 2 — NeuraBinder
+cd ~/Projects/neurabinder && pnpm dev
+# Settings → NeuralBridge → Mode: Remote → Connect (controller)
+```
+
+In-app simulator needs no extra process: Mode **Simulator**.
+
+Vocabulary mapping (NeuralBridge → NeuraBinder):  
+`click`/`primary` → `select`, `next`/`scroll_down` → `next`, `back`/`prev` → `back`/`prev`, `confirm`, `cancel`, `search`, `add`, `remove`.
 
 ## Envelope
 
