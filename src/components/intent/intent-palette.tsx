@@ -119,6 +119,14 @@ const ACTIONS = [
     icon: Sparkles,
     intent: "find",
   },
+  {
+    id: "a11y",
+    label: "Accessibility scorecard",
+    hint: "Keyboard, BCI, switch, contrast checks",
+    href: "/a11y",
+    icon: Sparkles,
+    intent: "find",
+  },
 ] as const;
 
 export function IntentPalette() {

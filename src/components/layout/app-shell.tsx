@@ -30,6 +30,7 @@ const NAV = [
   { href: "/scan", label: "Scan", icon: Camera },
   { href: "/portfolio", label: "Portfolio", icon: LineChart },
   { href: "/lists", label: "Lists", icon: List },
+  { href: "/a11y", label: "A11y", icon: Sparkles },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

@@ -25,6 +25,8 @@ import {
   type GenericIntentEvent,
 } from "@/lib/bci/generic-intent";
 import { IntentSocketPanel } from "@/components/showcase/intent-socket-panel";
+import { IntentRecordPanel } from "@/components/showcase/intent-record-panel";
+import { ScriptedShowcase } from "@/components/showcase/scripted-showcase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -141,6 +143,8 @@ export default function DemoPage() {
         </Card>
       </section>
 
+      <ScriptedShowcase />
+      <IntentRecordPanel />
       <IntentSocketPanel />
 
       <Card className={cn(bciMode && "border-2")} data-tour="demo-bci">
@@ -287,6 +291,7 @@ export default function DemoPage() {
             { href: "/binder", label: "Visual binder (3×3)" },
             { href: "/scan", label: "Scan queue confirm" },
             { href: "/portfolio", label: "Portfolio + snapshots" },
+            { href: "/a11y", label: "Accessibility scorecard" },
             { href: "/trade/calculator", label: "Trade calculator" },
             { href: "/import", label: "CSV import" },
           ].map((l) => (

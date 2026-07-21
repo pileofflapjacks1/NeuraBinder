@@ -20,17 +20,18 @@ export const metadata: Metadata = {
     template: "%s · NeuraBinder",
   },
   description:
-    "BCI/Neuralink-native TCG collection and portfolio manager for Pokémon TCG and Disney Lorcana. Thought-first, accessible, offline-capable.",
+    "BCI-inspired TCG collection & portfolio manager for Pokémon TCG and Disney Lorcana. Computer-side demo with intent palette, showcase mode, and accessibility tools. Not implant software.",
   applicationName: "NeuraBinder",
   authors: [{ name: "NeuraBinder" }],
   keywords: [
-    "Neuralink",
     "BCI",
+    "accessibility",
     "Pokémon TCG",
     "Lorcana",
     "collection tracker",
     "PWA",
-    "accessibility",
+    "Neurabeach",
+    "intent",
   ],
   manifest: "/manifest.webmanifest",
   appleWebApp: {
@@ -41,12 +42,30 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+  ),
   openGraph: {
     title: "NeuraBinder",
     description:
-      "The first TCG collection manager designed for high-bandwidth brain-computer interfaces.",
+      "BCI-inspired TCG binder — intent palette, showcase path, computer-side only. Not affiliated with Neuralink.",
     type: "website",
     siteName: "NeuraBinder",
+    images: [
+      {
+        url: "/og/demo.svg",
+        width: 1200,
+        height: 630,
+        alt: "NeuraBinder BCI Mode demo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NeuraBinder",
+    description:
+      "BCI-inspired TCG collection manager — /demo showcase, computer-side only.",
+    images: ["/og/demo.svg"],
   },
 };
 

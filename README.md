@@ -4,9 +4,10 @@
 
 > **Computer-side web app only.** Not implant software. Not a medical device. **Not affiliated with** Neuralink, The Pokémon Company, or Disney. Accessibility prototyping and suite demo.
 
-**Version:** 0.2.1  
-**Hero demo path:** [`/demo`](./src/app/demo/page.tsx) · **Showcase:** `?showcase=1`  
-**Intent socket:** [docs/INTENT_SOCKET.md](./docs/INTENT_SOCKET.md)
+**Version:** 0.2.2  
+**Hero demo:** [`/demo`](./src/app/demo/page.tsx) · **Showcase:** `?showcase=1` · **A11y:** [`/a11y`](./src/app/a11y/page.tsx)  
+**Intent socket:** [docs/INTENT_SOCKET.md](./docs/INTENT_SOCKET.md)  
+**Screenshots:** [`public/screenshots/`](./public/screenshots/) · **OG:** [`public/og/demo.svg`](./public/og/demo.svg)
 
 ---
 
@@ -40,7 +41,8 @@ pnpm dev
 
 | URL | Purpose |
 |-----|---------|
-| http://localhost:3000/demo | **Public showcase** — BCI Mode + intent socket console |
+| http://localhost:3000/demo | **Public showcase** — scripted path, record/replay, intents |
+| http://localhost:3000/a11y | Accessibility scorecard |
 | http://localhost:3000/?showcase=1 | Showcase mode (seed lock + banner) |
 | http://localhost:3000/collection | Full collection UI |
 | http://localhost:3000 | Home |

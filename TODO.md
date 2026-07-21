@@ -125,6 +125,16 @@ Do **not** block local features on these. When ready:
 
 ---
 
+## Slice A — showcase polish (done)
+
+- [x] Intent record / replay (buffer, preset tape, saved sessions, JSON export)
+- [x] Scripted showcase path (demo → IR collection → binder → portfolio → scan → a11y)
+- [x] OG meta for `/demo` + root (`/og/demo.svg`)
+- [x] Screenshot pack under `public/screenshots/`
+- [x] `/a11y` live accessibility scorecard
+
+---
+
 ## Slice 2 — local power tools (done)
 
 - [x] Undo / redo (⌘Z / ⌘⇧Z) for collection mutations

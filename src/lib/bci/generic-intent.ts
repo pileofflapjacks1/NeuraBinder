@@ -87,7 +87,9 @@ class GenericIntentBus {
 
   subscribe(fn: Listener): () => void {
     this.listeners.add(fn);
-    return () => this.listeners.delete(fn);
+    return () => {
+      this.listeners.delete(fn);
+    };
   }
 
   publish(ev: GenericIntentEvent) {
