@@ -2,8 +2,8 @@
   "manifest_version": "1.0.0",
   "name": "neurabinder",
   "display_name": "NeuraBinder",
-  "version": "0.2.2",
-  "description": "BCI-inspired TCG binder: showcase path, intent record/replay, /demo + /a11y, NeuralBridge-shaped intent socket. Computer-side web app — not implant software.",
+  "version": "0.2.3",
+  "description": "BCI-inspired TCG binder: live /demo, showcase path, intent record/replay, /a11y scorecard, NeuralBridge-shaped intents. Computer-side web app — not implant software.",
   "safety_class": "computer_side",
   "runtime": "web",
   "inputs": [

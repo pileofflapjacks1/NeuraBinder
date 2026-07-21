@@ -1,15 +1,19 @@
 # Screenshots (Neurabeach listing pack)
 
-SVG mock frames for catalog use — no external image host required.
+Served from the live demo host for the catalog:
 
-| File | Suggested caption |
-|------|-------------------|
-| `01-demo.svg` | /demo — BCI Mode + synthetic intents |
-| `02-collection.svg` | Collection grid with large BCI targets |
-| `03-binder.svg` | Visual binder 3×3 spatial pages |
-| `04-portfolio.svg` | Portfolio value + snapshots |
+`https://neura-binder.vercel.app/screenshots/…`
+
+| File | Caption |
+|------|---------|
+| `01-demo.svg` | Live demo — BCI Mode, synthetic intents, showcase path |
+| `02-collection.svg` | Collection — large targets, bulk edit, saved views |
+| `03-binder.svg` | Visual binder — 3×3 pages, cheapest path |
+| `04-portfolio.svg` | Portfolio — value, cost basis, snapshots |
 | `05-a11y.svg` | Accessibility scorecard |
 
-Also: `/og/demo.svg` for Open Graph shares of `/demo`.
+Also: `/og/demo.svg` for Open Graph / listing hero.
 
-Computer-side product screenshots only — not medical imagery.
+See repo root [`LISTING.md`](../../LISTING.md) for full Neurabeach field copy.
+
+Computer-side product frames only — not medical imagery.
