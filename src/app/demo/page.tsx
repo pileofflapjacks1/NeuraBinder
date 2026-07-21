@@ -5,7 +5,7 @@
  * No accounts. Keyboard + synthetic intent only.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Brain,
@@ -42,9 +42,10 @@ export default function DemoPage() {
   const playFeedback = useBciStore((s) => s.playFeedback);
   const enableShowcase = useShowcaseStore((s) => s.enable);
   const showcase = useShowcaseStore((s) => s.enabled);
-  const portfolio = useCollectionStore((s) => s.getPortfolio());
+  // Never call getPortfolio() inside the selector — new object every time → infinite re-render
   const userCards = useCollectionStore((s) => s.userCards);
-  void userCards;
+  const getPortfolio = useCollectionStore((s) => s.getPortfolio);
+  const portfolio = useMemo(() => getPortfolio(), [getPortfolio, userCards]);
 
   const [log, setLog] = useState<string[]>([]);
   const [lastIntent, setLastIntent] = useState<string>("—");

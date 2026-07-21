@@ -21,14 +21,13 @@ import { toast } from "sonner";
 export function IntentSocketPanel() {
   const bciMode = useBciStore((s) => s.bciMode);
   const [state, setState] = useState<IntentSocketState | null>(null);
-  const [wsUrl, setWsUrl] = useState(defaultWsUrlForUi);
+  const [wsUrl, setWsUrl] = useState(() => defaultWsUrlForUi());
   const [label, setLabel] = useState("select");
-  const onDeployedHost =
-    typeof window !== "undefined" &&
-    window.location.hostname !== "localhost" &&
-    window.location.hostname !== "127.0.0.1";
+  const [onDeployedHost, setOnDeployedHost] = useState(false);
 
   useEffect(() => {
+    const h = window.location.hostname;
+    setOnDeployedHost(h !== "localhost" && h !== "127.0.0.1");
     const sock = getIntentSocket();
     // Listeners only — never open localhost WS from production
     sock.start({ connectWs: false });

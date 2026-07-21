@@ -51,7 +51,11 @@ export function CollectionFilters() {
   const setFilters = useCollectionStore((s) => s.setFilters);
   const resetFilters = useCollectionStore((s) => s.resetFilters);
   const setSort = useCollectionStore((s) => s.setSort);
-  const sets = useCollectionStore((s) => s.getSets());
+  const catalog = useCollectionStore((s) => s.catalog);
+  const getSets = useCollectionStore((s) => s.getSets);
+  // getSets() must not run inside the zustand selector (new array → infinite loop)
+  const sets = getSets();
+  void catalog;
   const lists = useCollectionStore((s) => s.lists);
 
   const toggleCondition = (c: CardCondition) => {
