@@ -1,21 +1,12 @@
 /**
  * Intent socket — NeuralBridge-compatible ingress for NeuraBinder.
  *
- * Transports (all computer-side / simulation):
+ * Transports (computer-side / simulation only):
  * 1. window.postMessage  — parent iframe / Neurabeach embed
  * 2. BroadcastChannel    — multi-tab local loopback
- * 3. WebSocket client    — NeuralBridge or `pnpm intent:ws`
+ * 3. WebSocket client    — only when user connects OR NEXT_PUBLIC_INTENT_WS_URL is set
  *
- * Wire format (JSON):
- * {
- *   "type": "neurabinder.intent" | "neuralbridge.intent",
- *   "event": {
- *     "kind": "class_label" | "switch_binary" | "velocity_2d" | "synthetic",
- *     ...fields
- *   }
- * }
- *
- * Not implant I/O. No medical claims.
+ * Never auto-connects to ws://127.0.0.1 on deployed HTTPS hosts.
  */
 
 import {
@@ -27,10 +18,19 @@ import {
 export const INTENT_MESSAGE_TYPE = "neurabinder.intent";
 export const INTENT_MESSAGE_TYPE_ALT = "neuralbridge.intent";
 export const INTENT_CHANNEL = "neurabinder-intent";
-export const DEFAULT_WS_URL =
-  typeof process !== "undefined" && process.env.NEXT_PUBLIC_INTENT_WS_URL
-    ? process.env.NEXT_PUBLIC_INTENT_WS_URL
-    : "ws://127.0.0.1:7843";
+
+/** Suggested local URL for `pnpm intent:ws` — not auto-connected in production */
+export const LOCAL_DEV_WS_URL = "ws://127.0.0.1:7843";
+
+export function defaultWsUrlForUi(): string {
+  if (typeof process !== "undefined" && process.env.NEXT_PUBLIC_INTENT_WS_URL) {
+    return process.env.NEXT_PUBLIC_INTENT_WS_URL;
+  }
+  return LOCAL_DEV_WS_URL;
+}
+
+/** Alias kept for UI imports */
+export const DEFAULT_WS_URL = defaultWsUrlForUi();
 
 export type IntentSocketStatus =
   | "idle"
@@ -54,14 +54,44 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
 }
 
-/** Normalize external payloads into GenericIntentEvent */
+function isLocalhostPage(): boolean {
+  if (typeof window === "undefined") return true;
+  const h = window.location.hostname;
+  return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+}
+
+/** Block accidental production → localhost WS (mixed content + connection refused spam) */
+export function isWsUrlAllowed(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const targetLocal =
+      u.hostname === "localhost" ||
+      u.hostname === "127.0.0.1" ||
+      u.hostname === "[::1]";
+    if (targetLocal && typeof window !== "undefined" && !isLocalhostPage()) {
+      return false;
+    }
+    // HTTPS page cannot use plain ws:// except to localhost on same machine
+    if (
+      typeof window !== "undefined" &&
+      window.location.protocol === "https:" &&
+      u.protocol === "ws:" &&
+      !targetLocal
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function parseIntentPayload(
   raw: unknown,
   fallbackSource: IntentSource = "generic_intent"
 ): GenericIntentEvent | null {
   if (!isRecord(raw)) return null;
 
-  // Envelope: { type, event } or { type, kind, ... }
   let body: Record<string, unknown> = raw;
   if (
     (raw.type === INTENT_MESSAGE_TYPE ||
@@ -117,7 +147,6 @@ export function parseIntentPayload(
     };
   }
 
-  // Shorthand: { label: "select" }
   if (body.label != null && !kind) {
     return {
       kind: "class_label",
@@ -147,12 +176,14 @@ class IntentSocketClient {
   private state: IntentSocketState = {
     status: "idle",
     transport: "none",
-    wsUrl: DEFAULT_WS_URL,
+    wsUrl: "",
     received: 0,
   };
   private listeners = new Set<StatusListener>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private wantWs = false;
+  private reconnectAttempts = 0;
+  private readonly maxReconnects = 3;
 
   getState() {
     return this.state;
@@ -171,38 +202,47 @@ class IntentSocketClient {
     this.listeners.forEach((l) => l(this.state));
   }
 
-  /** Start postMessage + BroadcastChannel (+ optional WS) */
+  /** Start postMessage + BroadcastChannel. WebSocket is never automatic to localhost. */
   start(opts?: { wsUrl?: string; connectWs?: boolean }) {
     if (typeof window === "undefined") return;
-    if (this.started) {
-      if (opts?.connectWs) this.connectWebSocket(opts.wsUrl);
+
+    if (!this.started) {
+      this.started = true;
+      window.addEventListener("message", this.onWindowMessage);
+      try {
+        this.bc = new BroadcastChannel(INTENT_CHANNEL);
+        this.bc.onmessage = (ev) => this.ingest(ev.data, "broadcast");
+      } catch {
+        /* Safari private etc. */
+      }
+      this.setState({
+        status: "open",
+        transport: "broadcast",
+        lastError: undefined,
+      });
+    }
+
+    const envUrl = process.env.NEXT_PUBLIC_INTENT_WS_URL?.trim();
+    const explicit = opts?.wsUrl?.trim();
+
+    // Auto-connect only when env URL is set AND allowed on this host
+    if (envUrl && isWsUrlAllowed(envUrl)) {
+      this.connectWebSocket(envUrl);
       return;
     }
-    this.started = true;
-    if (opts?.wsUrl) this.state.wsUrl = opts.wsUrl;
 
-    window.addEventListener("message", this.onWindowMessage);
-
-    try {
-      this.bc = new BroadcastChannel(INTENT_CHANNEL);
-      this.bc.onmessage = (ev) => this.ingest(ev.data, "broadcast");
-    } catch {
-      /* Safari private etc. */
+    // Manual connect path requires a real URL + connectWs flag
+    if (opts?.connectWs && explicit && isWsUrlAllowed(explicit)) {
+      this.connectWebSocket(explicit);
+      return;
     }
 
-    this.setState({
-      status: "open",
-      transport: "broadcast",
-      lastError: undefined,
-    });
-
-    // Only auto-connect WS when an explicit URL is configured.
-    // Never default to ws://127.0.0.1 on production HTTPS (mixed content / noise).
-    const envUrl = process.env.NEXT_PUBLIC_INTENT_WS_URL;
-    if (envUrl) {
-      this.connectWebSocket(opts?.wsUrl ?? envUrl);
-    } else if (opts?.connectWs && opts?.wsUrl) {
-      this.connectWebSocket(opts.wsUrl);
+    if (opts?.connectWs && explicit && !isWsUrlAllowed(explicit)) {
+      this.setState({
+        status: "error",
+        lastError:
+          "Local WebSocket (127.0.0.1) is only available when running the app on localhost. Use postMessage/BroadcastChannel on Vercel, or set NEXT_PUBLIC_INTENT_WS_URL to a wss:// host.",
+      });
     }
   }
 
@@ -211,17 +251,34 @@ class IntentSocketClient {
     window.removeEventListener("message", this.onWindowMessage);
     this.bc?.close();
     this.bc = null;
-    this.wantWs = false;
-    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
-    this.ws?.close();
-    this.ws = null;
+    this.disconnectWebSocket();
     this.started = false;
     this.setState({ status: "closed", transport: "none" });
   }
 
   connectWebSocket(url?: string) {
     if (typeof window === "undefined") return;
-    const wsUrl = url ?? this.state.wsUrl ?? DEFAULT_WS_URL;
+
+    const wsUrl = (url ?? this.state.wsUrl ?? "").trim();
+    if (!wsUrl) {
+      this.setState({
+        status: "error",
+        lastError: "No WebSocket URL provided",
+      });
+      return;
+    }
+
+    if (!isWsUrlAllowed(wsUrl)) {
+      this.wantWs = false;
+      this.setState({
+        status: "error",
+        wsUrl,
+        lastError:
+          "Blocked: cannot open local ws://127.0.0.1 from the deployed site. Run `pnpm intent:ws` only with local `pnpm dev`.",
+      });
+      return;
+    }
+
     this.wantWs = true;
     this.setState({ wsUrl, status: "connecting", transport: "websocket" });
 
@@ -231,20 +288,24 @@ class IntentSocketClient {
       this.ws = ws;
 
       ws.onopen = () => {
+        this.reconnectAttempts = 0;
         this.setState({
           status: "open",
           transport: "websocket",
           lastError: undefined,
         });
-        // hello so bridges know we're a UI consumer
-        ws.send(
-          JSON.stringify({
-            type: "neurabinder.hello",
-            role: "ui",
-            app: "neurabinder",
-            v: 1,
-          })
-        );
+        try {
+          ws.send(
+            JSON.stringify({
+              type: "neurabinder.hello",
+              role: "ui",
+              app: "neurabinder",
+              v: 1,
+            })
+          );
+        } catch {
+          /* ignore */
+        }
       };
 
       ws.onmessage = (ev) => {
@@ -252,33 +313,54 @@ class IntentSocketClient {
           const data = JSON.parse(String(ev.data));
           this.ingest(data, "websocket");
         } catch {
-          // plain label string
           this.ingest(
-            { kind: "class_label", label: String(ev.data), source: "websocket_intent" },
+            {
+              kind: "class_label",
+              label: String(ev.data),
+              source: "websocket_intent",
+            },
             "websocket"
           );
         }
       };
 
       ws.onerror = () => {
+        // onclose will handle retry / final error
         this.setState({
           status: "error",
-          lastError: "WebSocket error (is intent:ws running?)",
+          lastError: "WebSocket error",
         });
       };
 
       ws.onclose = () => {
         this.ws = null;
-        if (this.wantWs) {
-          this.setState({ status: "closed", lastError: "WS closed — retrying…" });
+        if (!this.wantWs) {
+          this.setState({ status: this.started ? "open" : "closed" });
+          return;
+        }
+
+        // Limited reconnect — never spam forever
+        if (this.reconnectAttempts < this.maxReconnects) {
+          this.reconnectAttempts += 1;
+          const delay = 1500 * this.reconnectAttempts;
+          this.setState({
+            status: "closed",
+            lastError: `WS closed — retry ${this.reconnectAttempts}/${this.maxReconnects}…`,
+          });
           this.reconnectTimer = setTimeout(() => {
             if (this.wantWs) this.connectWebSocket(wsUrl);
-          }, 2000);
+          }, delay);
         } else {
-          this.setState({ status: "closed" });
+          this.wantWs = false;
+          this.setState({
+            status: "error",
+            lastError:
+              "WebSocket unavailable (stopped retrying). Intent buttons, keyboard, and postMessage still work.",
+          });
         }
       };
     } catch (e) {
+      this.wantWs = false;
       this.setState({
         status: "error",
         lastError: e instanceof Error ? e.message : "WS failed",
@@ -288,16 +370,24 @@ class IntentSocketClient {
 
   disconnectWebSocket() {
     this.wantWs = false;
-    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
-    this.ws?.close();
+    this.reconnectAttempts = 0;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    try {
+      this.ws?.close();
+    } catch {
+      /* ignore */
+    }
     this.ws = null;
     this.setState({
       status: this.started ? "open" : "idle",
       transport: this.started ? "broadcast" : "none",
+      lastError: undefined,
     });
   }
 
-  /** Publish to BC + optional WS (for local tooling) */
   broadcast(event: GenericIntentEvent) {
     const msg = envelopeIntent(event);
     try {
@@ -310,14 +400,12 @@ class IntentSocketClient {
     }
   }
 
-  /** Send to parent frame (Neurabeach embed host) */
   postToParent(event: GenericIntentEvent) {
     if (typeof window === "undefined") return;
     window.parent?.postMessage(envelopeIntent(event), "*");
   }
 
   private onWindowMessage = (ev: MessageEvent) => {
-    // Accept same-origin or any parent demo host (showcase embeds)
     this.ingest(ev.data, "postMessage");
   };
 

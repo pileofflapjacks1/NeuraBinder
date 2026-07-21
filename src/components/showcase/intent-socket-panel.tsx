@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import {
-  DEFAULT_WS_URL,
+  LOCAL_DEV_WS_URL,
+  defaultWsUrlForUi,
   envelopeIntent,
   getIntentSocket,
+  isWsUrlAllowed,
   type IntentSocketState,
 } from "@/lib/bci/intent-socket";
 import { genericIntentBus } from "@/lib/bci/generic-intent";
@@ -19,17 +21,28 @@ import { toast } from "sonner";
 export function IntentSocketPanel() {
   const bciMode = useBciStore((s) => s.bciMode);
   const [state, setState] = useState<IntentSocketState | null>(null);
-  const [wsUrl, setWsUrl] = useState(DEFAULT_WS_URL);
+  const [wsUrl, setWsUrl] = useState(defaultWsUrlForUi);
   const [label, setLabel] = useState("select");
+  const onDeployedHost =
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1";
 
   useEffect(() => {
     const sock = getIntentSocket();
+    // Listeners only — never open localhost WS from production
     sock.start({ connectWs: false });
+    sock.disconnectWebSocket();
     return sock.subscribe(setState);
   }, []);
 
   const connect = () => {
-    getIntentSocket().start({ connectWs: true, wsUrl });
+    if (!isWsUrlAllowed(wsUrl)) {
+      toast.error(
+        "Local WebSocket only works with `pnpm dev` on your machine. On Vercel, use synthetic buttons / postMessage."
+      );
+      return;
+    }
     getIntentSocket().connectWebSocket(wsUrl);
     toast.message(`Connecting ${wsUrl}`);
   };
@@ -42,7 +55,6 @@ export function IntentSocketPanel() {
       ts: Date.now(),
       confidence: 1,
     };
-    // Local bus + broadcast to other tabs / WS peers
     genericIntentBus.publish(event);
     getIntentSocket().broadcast(event);
     getIntentSocket().postToParent(event);
@@ -80,19 +92,29 @@ export function IntentSocketPanel() {
                     : "secondary"
               }
             >
-              {state.transport} · {state.status}
+              {state.transport} · {statusLabel(state)}
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
         <p className="text-muted-foreground">
-          NeuralBridge-compatible ingress:{" "}
-          <code className="rounded bg-muted px-1">postMessage</code>,{" "}
-          <code className="rounded bg-muted px-1">BroadcastChannel</code>,{" "}
-          <code className="rounded bg-muted px-1">WebSocket</code>. Computer-side
-          only.
+          Always on:{" "}
+          <code className="rounded bg-muted px-1">postMessage</code> +{" "}
+          <code className="rounded bg-muted px-1">BroadcastChannel</code>.
+          WebSocket is <strong>optional</strong> and only for local{" "}
+          <code className="rounded bg-muted px-1">pnpm intent:ws</code>.
         </p>
+
+        {onDeployedHost && (
+          <p className="rounded-xl border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
+            You are on the deployed site. Connections to{" "}
+            <code className="rounded bg-muted px-1">{LOCAL_DEV_WS_URL}</code>{" "}
+            are blocked (that server only runs on your laptop). Use the intent
+            buttons above — the red console spam should stop after this deploy.
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-2">
           <Input
             bci={bciMode}
@@ -100,8 +122,13 @@ export function IntentSocketPanel() {
             onChange={(e) => setWsUrl(e.target.value)}
             className="min-w-[220px] flex-1 font-mono text-xs"
             aria-label="WebSocket URL"
+            disabled={onDeployedHost}
           />
-          <Button size={bciMode ? "bci" : "default"} onClick={connect}>
+          <Button
+            size={bciMode ? "bci" : "default"}
+            onClick={connect}
+            disabled={onDeployedHost}
+          >
             Connect WS
           </Button>
           <Button
@@ -116,8 +143,8 @@ export function IntentSocketPanel() {
           <p className="text-xs text-destructive">{state.lastError}</p>
         )}
         <p className="text-xs text-muted-foreground">
-          Local server: <code className="rounded bg-muted px-1">pnpm intent:ws</code>{" "}
-          → ws://127.0.0.1:7843 · received {state?.received ?? 0}
+          Local only: <code className="rounded bg-muted px-1">pnpm intent:ws</code>{" "}
+          then Connect · events received: {state?.received ?? 0}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Input
@@ -141,4 +168,8 @@ export function IntentSocketPanel() {
       </CardContent>
     </Card>
   );
+}
+
+function statusLabel(s: IntentSocketState) {
+  return s.status;
 }

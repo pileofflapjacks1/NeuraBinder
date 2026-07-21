@@ -63,13 +63,11 @@ export function ShowcaseController() {
       });
     }
 
-    // postMessage + BroadcastChannel always; WS only if env configured
+    // postMessage + BroadcastChannel only. Never open localhost WS on Vercel.
+    // Optional remote WS: set NEXT_PUBLIC_INTENT_WS_URL to a wss:// host.
     const socket = getIntentSocket();
-    const envWs = process.env.NEXT_PUBLIC_INTENT_WS_URL;
-    socket.start({
-      connectWs: Boolean(autoIntentSocket && envWs),
-      wsUrl: envWs,
-    });
+    socket.start({ connectWs: false });
+    void autoIntentSocket;
 
     if (autoTour && !tourOnce.current && pathname !== "/demo") {
       tourOnce.current = true;
