@@ -63,11 +63,12 @@ export function ShowcaseController() {
       });
     }
 
+    // postMessage + BroadcastChannel always; WS only if env configured
     const socket = getIntentSocket();
+    const envWs = process.env.NEXT_PUBLIC_INTENT_WS_URL;
     socket.start({
-      connectWs: autoIntentSocket,
-      wsUrl:
-        process.env.NEXT_PUBLIC_INTENT_WS_URL || "ws://127.0.0.1:7843",
+      connectWs: Boolean(autoIntentSocket && envWs),
+      wsUrl: envWs,
     });
 
     if (autoTour && !tourOnce.current && pathname !== "/demo") {

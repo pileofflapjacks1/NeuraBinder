@@ -196,12 +196,13 @@ class IntentSocketClient {
       lastError: undefined,
     });
 
-    if (opts?.connectWs !== false) {
-      // Auto-connect when showcase wants it or env URL set
-      const envOn = Boolean(process.env.NEXT_PUBLIC_INTENT_WS_URL);
-      if (opts?.connectWs || envOn) {
-        this.connectWebSocket(opts?.wsUrl);
-      }
+    // Only auto-connect WS when an explicit URL is configured.
+    // Never default to ws://127.0.0.1 on production HTTPS (mixed content / noise).
+    const envUrl = process.env.NEXT_PUBLIC_INTENT_WS_URL;
+    if (envUrl) {
+      this.connectWebSocket(opts?.wsUrl ?? envUrl);
+    } else if (opts?.connectWs && opts?.wsUrl) {
+      this.connectWebSocket(opts.wsUrl);
     }
   }
 

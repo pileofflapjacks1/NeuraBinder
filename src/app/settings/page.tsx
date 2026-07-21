@@ -14,6 +14,7 @@ import { BackupPanel } from "@/components/backup/backup-panel";
 import { startGuidedTour } from "@/components/tour/guided-tour";
 import { useShowcaseStore } from "@/lib/stores/showcase-store";
 import { IntentSocketPanel } from "@/components/showcase/intent-socket-panel";
+import { unregisterServiceWorkers } from "@/lib/pwa/register-sw";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -281,6 +282,17 @@ export default function SettingsPage() {
               onClick={() => startGuidedTour()}
             >
               Replay guided tour
+            </Button>
+            <Button
+              variant="outline"
+              size={bciMode ? "bci" : "default"}
+              onClick={async () => {
+                await unregisterServiceWorkers();
+                toast.success("Service worker cleared — reloading…");
+                window.setTimeout(() => window.location.reload(), 400);
+              }}
+            >
+              Clear PWA cache
             </Button>
             <Button
               variant="destructive"
