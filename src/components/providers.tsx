@@ -11,6 +11,7 @@ import type { BciIntent } from "@/lib/types";
 import { registerServiceWorker } from "@/lib/pwa/register-sw";
 import { GuidedTour } from "@/components/tour/guided-tour";
 import { ShowcaseController } from "@/components/showcase/showcase-controller";
+import { ProfileBootstrap } from "@/components/profile/profile-switcher";
 
 function routeIntent(
   intent: BciIntent,
@@ -90,6 +91,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <QueryClientProvider client={client}>
         <BciEffects />
+        <ProfileBootstrap />
         <Suspense fallback={null}>
           <ShowcaseController />
         </Suspense>

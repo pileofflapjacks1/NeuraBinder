@@ -15,6 +15,7 @@ import {
   ArrowLeftRight,
   Eye,
   Sparkles,
+  Award,
 } from "lucide-react";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { useActivityStore } from "@/lib/stores/activity-store";
@@ -102,6 +103,14 @@ const ACTIONS = [
     href: "/binder",
     icon: BookOpen,
     intent: "missing",
+  },
+  {
+    id: "grading",
+    label: "Grading pipeline",
+    hint: "Candidates → lab → returned",
+    href: "/grading",
+    icon: Award,
+    intent: "add",
   },
   {
     id: "collection",

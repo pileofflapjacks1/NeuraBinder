@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useCollectionStore } from "@/lib/stores/collection-store";
 import { useBciStore } from "@/lib/stores/bci-store";
+import { useProfileStore } from "@/lib/stores/profile-store";
 import {
   buildBinderPages,
   cheapestPathToComplete,
@@ -14,6 +15,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { SetProgressBar } from "@/components/collection/set-progress";
 import { SwitchScanController } from "@/components/bci/switch-scan";
 import { useActivityStore } from "@/lib/stores/activity-store";
+import { Printer } from "lucide-react";
 
 export default function BinderPage() {
   const bciMode = useBciStore((s) => s.bciMode);
@@ -25,6 +27,7 @@ export default function BinderPage() {
   const getSets = useCollectionStore((s) => s.getSets);
   const addWantCard = useCollectionStore((s) => s.addWantCard);
   const log = useActivityStore((s) => s.log);
+  const profileName = useProfileStore((s) => s.activeProfile().name);
 
   const sets = getSets();
   const [setId, setSetId] = useState(
@@ -46,6 +49,11 @@ export default function BinderPage() {
     () => cheapestPathToComplete(catalog, items, setId),
     [catalog, items, setId]
   );
+
+  const locationFor = (cardId: string) => {
+    const hit = items.find((i) => i.cardId === cardId && i.location);
+    return hit?.location;
+  };
 
   const announceTour = () => {
     const progress = useCollectionStore.getState().getSetProgress(setId);
@@ -74,10 +82,10 @@ export default function BinderPage() {
             Visual binder
           </h1>
           <p className="text-sm text-muted-foreground">
-            Stable 3×3 pages for spatial memory — BCI-friendly navigation
+            {profileName}&apos;s pages · 3×3 spatial memory · BCI-friendly
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 print:hidden">
           <select
             className={cn(
               "rounded-xl border border-input bg-background px-3 text-sm",
@@ -103,17 +111,28 @@ export default function BinderPage() {
           >
             Binder tour
           </Button>
+          <Button
+            size={bciMode ? "bci" : "default"}
+            variant="secondary"
+            onClick={() => window.print()}
+          >
+            <Printer className="h-4 w-4" />
+            Print page
+          </Button>
         </div>
       </div>
 
       {setId && <SetProgressBar setId={setId} />}
 
-      <Card className={cn(bciMode && "border-2")}>
+      <Card className={cn("print:shadow-none print:border", bciMode && "border-2")}>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle>
             Page {page} / {Math.max(pages.length, 1)}
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              {sets.find((s) => s.id === setId)?.name}
+            </span>
           </CardTitle>
-          <div className="flex gap-2">
+          <div className="flex gap-2 print:hidden">
             <Button
               size={bciMode ? "bci" : "sm"}
               variant="outline"
@@ -151,6 +170,7 @@ export default function BinderPage() {
                 );
               }
               const focused = focusIndex === i;
+              const loc = slot.card ? locationFor(slot.card.id) : undefined;
               return (
                 <button
                   key={i}
@@ -188,11 +208,16 @@ export default function BinderPage() {
                           missing
                         </Badge>
                       )}
+                      {loc && (
+                        <span className="mt-1 line-clamp-1 text-[10px] text-muted-foreground">
+                          {loc}
+                        </span>
+                      )}
                       {!slot.owned && (
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="mt-1"
+                          className="mt-1 print:hidden"
                           onClick={(e) => {
                             e.stopPropagation();
                             addWantCard(slot.card!.id);

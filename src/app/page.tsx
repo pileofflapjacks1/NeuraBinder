@@ -46,8 +46,14 @@ const LINKS = [
   {
     href: "/binder",
     title: "Visual binder",
-    desc: "3×3 pages + cheapest path to complete a set",
+    desc: "3×3 pages + cheapest path + print",
     icon: Library,
+  },
+  {
+    href: "/grading",
+    title: "Grading pipeline",
+    desc: "Local Kanban: candidate → lab → returned",
+    icon: Sparkles,
   },
   {
     href: "/import",

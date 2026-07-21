@@ -8,6 +8,7 @@ import { useSnapshotsStore } from "@/lib/stores/snapshots-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { BackupPanel } from "@/components/backup/backup-panel";
@@ -15,6 +16,10 @@ import { startGuidedTour } from "@/components/tour/guided-tour";
 import { useShowcaseStore } from "@/lib/stores/showcase-store";
 import { IntentSocketPanel } from "@/components/showcase/intent-socket-panel";
 import { unregisterServiceWorkers } from "@/lib/pwa/register-sw";
+import { ProfileSwitcher } from "@/components/profile/profile-switcher";
+import { useProfileStore } from "@/lib/stores/profile-store";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -38,6 +43,12 @@ export default function SettingsPage() {
   const lockData = useShowcaseStore((s) => s.lockData);
   const enableShowcase = useShowcaseStore((s) => s.enable);
   const disableShowcase = useShowcaseStore((s) => s.disable);
+  const createProfile = useProfileStore((s) => s.createProfile);
+  const renameProfile = useProfileStore((s) => s.renameProfile);
+  const deleteProfile = useProfileStore((s) => s.deleteProfile);
+  const activeId = useProfileStore((s) => s.activeId);
+  const profiles = useProfileStore((s) => s.profiles);
+  const [newName, setNewName] = useState("");
 
   const row = (
     id: string,
@@ -85,6 +96,76 @@ export default function SettingsPage() {
           BCI profile, accessibility, and local data
         </p>
       </div>
+
+      <Card className={cn(bciMode && "border-2")}>
+        <CardHeader>
+          <CardTitle>Household profiles</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Separate local binders (You / Partner / custom). No account — data
+            stays in this browser.
+          </p>
+          <ProfileSwitcher />
+          <div className="flex flex-wrap gap-2">
+            <Input
+              bci={bciMode}
+              placeholder="New profile name"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="max-w-xs"
+            />
+            <Button
+              size={bciMode ? "bci" : "default"}
+              onClick={() => {
+                if (!newName.trim()) return;
+                createProfile(newName.trim());
+                setNewName("");
+                toast.success("Profile created");
+              }}
+            >
+              Add profile
+            </Button>
+          </div>
+          <ul className="space-y-2 text-sm">
+            {profiles.map((p) => (
+              <li
+                key={p.id}
+                className="flex flex-wrap items-center gap-2 rounded-xl border border-border px-3 py-2"
+              >
+                <span className="font-medium min-w-[5rem]">{p.name}</span>
+                {p.id === activeId && <Badge variant="secondary">active</Badge>}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    const n = window.prompt("Rename profile", p.name);
+                    if (n) {
+                      renameProfile(p.id, n);
+                      toast.success("Renamed");
+                    }
+                  }}
+                >
+                  Rename
+                </Button>
+                {p.id !== "profile-you" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive"
+                    onClick={() => {
+                      if (deleteProfile(p.id)) toast.success("Deleted");
+                      else toast.error("Cannot delete");
+                    }}
+                  >
+                    Delete
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
 
       <Card className={cn(bciMode && "border-2")}>
         <CardHeader>

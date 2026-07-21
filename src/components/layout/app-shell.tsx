@@ -12,6 +12,8 @@ import {
   List,
   Settings,
   Sparkles,
+  BookOpen,
+  Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBciStore } from "@/lib/stores/bci-store";
@@ -20,6 +22,7 @@ import { IntentPalette } from "@/components/intent/intent-palette";
 import { OfflineBanner } from "@/components/layout/offline-banner";
 import { ShowcaseBanner } from "@/components/showcase/showcase-banner";
 import { useShowcaseStore } from "@/lib/stores/showcase-store";
+import { ProfileSwitcher } from "@/components/profile/profile-switcher";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -27,10 +30,11 @@ const NAV = [
   { href: "/", label: "Home", icon: LayoutGrid },
   { href: "/demo", label: "Demo", icon: Sparkles },
   { href: "/collection", label: "Collection", icon: Library },
+  { href: "/binder", label: "Binder", icon: BookOpen },
+  { href: "/grading", label: "Grading", icon: Award },
   { href: "/scan", label: "Scan", icon: Camera },
   { href: "/portfolio", label: "Portfolio", icon: LineChart },
   { href: "/lists", label: "Lists", icon: List },
-  { href: "/a11y", label: "A11y", icon: Sparkles },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -146,6 +150,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </kbd>
             </Button>
 
+            <div className="hidden sm:block">
+              <ProfileSwitcher compact />
+            </div>
             {!showcase && (
               <Button
                 variant="ghost"

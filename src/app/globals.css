@@ -169,3 +169,19 @@ html.bci-mode :focus-visible {
   clip: auto;
   white-space: normal;
 }
+
+@media print {
+  header,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}
