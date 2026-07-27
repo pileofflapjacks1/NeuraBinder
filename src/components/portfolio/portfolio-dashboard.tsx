@@ -148,11 +148,10 @@ export function PortfolioDashboard() {
               bciMode ? "text-3xl" : "text-2xl"
             )}
           >
-            Portfolio
+            What it’s worth
           </h1>
           <p className="text-sm text-muted-foreground">
-            Cost basis, market value, and allocation — privacy-first local demo
-            prices
+            Totals, gains, and breakdowns · demo prices on this device
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -161,10 +160,10 @@ export function PortfolioDashboard() {
             variant="secondary"
             onClick={() => takeSnapshot("manual")}
           >
-            Snapshot now
+            Save checkpoint
           </Button>
           <Button size={bciMode ? "bci" : "default"} variant="outline" onClick={exportCsv}>
-            Export CSV
+            Download CSV
           </Button>
         </div>
       </div>

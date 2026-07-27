@@ -139,21 +139,17 @@ export default function A11yPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <div className="mb-2 flex flex-wrap gap-2">
-          <Badge>Accessibility</Badge>
-          <Badge variant="secondary">computer_side</Badge>
-        </div>
         <h1
           className={cn(
             "font-bold tracking-tight",
             bciMode ? "text-3xl" : "text-2xl"
           )}
         >
-          Accessibility scorecard
+          Accessibility
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Live checklist for keyboard, BCI Mode, and motor-friendly paths.
-          Neurabeach-friendly reference — no external audits required.
+          Keyboard, Easy mode, and high-contrast options so anyone can use the
+          app comfortably.
         </p>
       </div>
 

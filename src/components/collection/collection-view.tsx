@@ -16,6 +16,9 @@ import { SwitchScanController } from "@/components/bci/switch-scan";
 import { formatCurrency, cn } from "@/lib/utils";
 import { getBciAdapter } from "@/lib/bci/adapter";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function CollectionView() {
   const bciMode = useBciStore((s) => s.bciMode);
@@ -23,6 +26,7 @@ export function CollectionView() {
   const setFocusIndex = useBciStore((s) => s.setFocusIndex);
   const moveFocus = useBciStore((s) => s.moveFocus);
   const profile = useBciStore((s) => s.profile);
+  const [showTools, setShowTools] = useState(false);
 
   const filters = useCollectionStore((s) => s.filters);
   const selectedId = useCollectionStore((s) => s.selectedId);
@@ -115,25 +119,40 @@ export function CollectionView() {
               bciMode ? "text-3xl" : "text-2xl"
             )}
           >
-            Collection
+            My cards
           </h1>
           <p className="text-sm text-muted-foreground">
-            {items.length} shown · {formatCurrency(totalValue)} filtered value
-            {profile.useDwell && bciMode && " · dwell-to-select on"}
+            {items.length === 0
+              ? "No cards match — try Clear filters"
+              : `${items.length} cards · ${formatCurrency(totalValue)}`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <HistoryControls />
-          <BulkBar />
+          <Button asChild size={bciMode ? "default" : "sm"} variant="secondary">
+            <Link href="/import">Import</Link>
+          </Button>
+          <Button asChild size={bciMode ? "default" : "sm"} variant="outline">
+            <Link href="/scan">Add photo</Link>
+          </Button>
+          <Button
+            size={bciMode ? "default" : "sm"}
+            variant="ghost"
+            onClick={() => setShowTools((v) => !v)}
+          >
+            {showTools ? "Hide tools" : "Edit tools"}
+          </Button>
         </div>
       </div>
 
-      <div
-        className="rounded-2xl border border-border bg-card p-4"
-        data-tour="saved-views"
-      >
-        <SavedViewsPanel />
-      </div>
+      {showTools && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-border p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <HistoryControls />
+            <BulkBar />
+          </div>
+          <SavedViewsPanel />
+        </div>
+      )}
 
       {filters.setIds?.[0] && <SetProgressBar setId={filters.setIds[0]} />}
       {filters.missingForMasterSet && !filters.setIds?.[0] && (
@@ -141,7 +160,7 @@ export function CollectionView() {
       )}
       {filters.missingForMasterSet && (
         <Badge variant="warning" className="w-fit text-sm">
-          Master set mode · {missing.length} missing in catalog sample
+          Showing gaps · {missing.length} missing from this set
         </Badge>
       )}
 
@@ -163,7 +182,7 @@ export function CollectionView() {
               className="mb-4 rounded-2xl border border-warning/40 bg-warning/5 p-4"
               aria-label="Missing cards"
             >
-              <h2 className="mb-2 font-semibold">Missing for master set</h2>
+              <h2 className="mb-2 font-semibold">Still need these</h2>
               <ul className="grid gap-2 sm:grid-cols-2">
                 {missing.map((c) => (
                   <li
@@ -188,7 +207,7 @@ export function CollectionView() {
             <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center">
               <p className="text-lg font-medium">No cards match</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Reset filters or try fuzzy search in the filter panel.
+                Tap Clear filters, or search by a card name.
               </p>
             </div>
           ) : (

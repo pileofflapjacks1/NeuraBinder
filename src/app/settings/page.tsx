@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useTheme } from "next-themes";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { useCollectionStore } from "@/lib/stores/collection-store";
@@ -20,7 +20,7 @@ import { unregisterServiceWorkers } from "@/lib/pwa/register-sw";
 import { ProfileSwitcher } from "@/components/profile/profile-switcher";
 import { useProfileStore } from "@/lib/stores/profile-store";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -34,8 +34,6 @@ export default function SettingsPage() {
   const setVoiceEnabled = useBciStore((s) => s.setVoiceEnabled);
   const profile = useBciStore((s) => s.profile);
   const updateProfile = useBciStore((s) => s.updateProfile);
-  const switchScanEnabled = useBciStore((s) => s.switchScanEnabled);
-  const setSwitchScanEnabled = useBciStore((s) => s.setSwitchScanEnabled);
   const resetToSeed = useCollectionStore((s) => s.resetToSeed);
   const refreshMarketPrices = useCollectionStore((s) => s.refreshMarketPrices);
   const getPortfolio = useCollectionStore((s) => s.getPortfolio);
@@ -50,6 +48,8 @@ export default function SettingsPage() {
   const activeId = useProfileStore((s) => s.activeId);
   const profiles = useProfileStore((s) => s.profiles);
   const [newName, setNewName] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showDanger, setShowDanger] = useState(false);
 
   const row = (
     id: string,
@@ -94,24 +94,23 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="text-sm text-muted-foreground">
-          BCI profile, accessibility, and local data
+          Profiles, display, and backup. Everything stays on this device.
         </p>
       </div>
 
       <Card className={cn(bciMode && "border-2")}>
         <CardHeader>
-          <CardTitle>Household profiles</CardTitle>
+          <CardTitle>Who is using this device?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Separate local binders (You / Partner / custom). No account — data
-            stays in this browser.
+            Switch between family members. Each person has their own cards.
           </p>
           <ProfileSwitcher />
           <div className="flex flex-wrap gap-2">
             <Input
               bci={bciMode}
-              placeholder="New profile name"
+              placeholder="Name (e.g. Alex)"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               className="max-w-xs"
@@ -122,10 +121,10 @@ export default function SettingsPage() {
                 if (!newName.trim()) return;
                 createProfile(newName.trim());
                 setNewName("");
-                toast.success("Profile created");
+                toast.success("Profile added");
               }}
             >
-              Add profile
+              Add person
             </Button>
           </div>
           <ul className="space-y-2 text-sm">
@@ -134,13 +133,13 @@ export default function SettingsPage() {
                 key={p.id}
                 className="flex flex-wrap items-center gap-2 rounded-xl border border-border px-3 py-2"
               >
-                <span className="font-medium min-w-[5rem]">{p.name}</span>
+                <span className="min-w-[5rem] font-medium">{p.name}</span>
                 {p.id === activeId && <Badge variant="secondary">active</Badge>}
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => {
-                    const n = window.prompt("Rename profile", p.name);
+                    const n = window.prompt("Rename", p.name);
                     if (n) {
                       renameProfile(p.id, n);
                       toast.success("Renamed");
@@ -155,8 +154,14 @@ export default function SettingsPage() {
                     variant="ghost"
                     className="text-destructive"
                     onClick={() => {
-                      if (deleteProfile(p.id)) toast.success("Deleted");
-                      else toast.error("Cannot delete");
+                      if (
+                        window.confirm(
+                          `Delete “${p.name}” and their cards on this device?`
+                        )
+                      ) {
+                        if (deleteProfile(p.id)) toast.success("Deleted");
+                        else toast.error("Could not delete");
+                      }
                     }}
                   >
                     Delete
@@ -168,162 +173,70 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <NeuralBridgePanel />
-
       <Card className={cn(bciMode && "border-2")}>
         <CardHeader>
-          <CardTitle>Neuralink / BCI</CardTitle>
+          <CardTitle>Display & comfort</CardTitle>
         </CardHeader>
         <CardContent>
           {row(
             "bci-mode",
-            "BCI Mode",
-            "Larger targets, lower density, predictive ranking, discrete intents",
+            "Easy mode",
+            "Bigger buttons — recommended for everyone",
             bciMode,
             setBciMode
           )}
           {row(
-            "intent-only",
-            "Intent-only mode",
-            "Assume no continuous cursor — pair with switch scanning",
-            profile.intentOnlyMode,
-            (v) => updateProfile({ intentOnlyMode: v })
-          )}
-          {row(
-            "switch-scan",
-            "Single-switch scan",
-            "Auto-advance focus on a timer; Enter/Space selects",
-            switchScanEnabled,
-            setSwitchScanEnabled
-          )}
-          {row(
-            "scan-aggressive",
-            "Aggressive scan auto-rank",
-            "Widen confidence gap for top candidate",
-            profile.scanAutoRankAggressive,
-            (v) => updateProfile({ scanAutoRankAggressive: v })
-          )}
-          {row(
-            "sound",
-            "Sound feedback",
-            "Beep on select / success / error (sensory stub)",
-            profile.soundFeedback,
-            (v) => updateProfile({ soundFeedback: v })
-          )}
-          {row(
-            "voice",
-            "Voice input",
-            "Web Speech API on the command bar",
-            voiceEnabled,
-            setVoiceEnabled
-          )}
-
-          <div className="mt-4 space-y-3">
-            <label className="block text-sm font-medium">
-              Target size
-              <select
-                className={cn(
-                  "mt-1 w-full rounded-xl border border-input bg-background px-3",
-                  bciMode ? "h-14" : "h-10"
-                )}
-                value={profile.targetSize}
-                onChange={(e) =>
-                  updateProfile({
-                    targetSize: e.target.value as "default" | "large" | "xl",
-                  })
-                }
-              >
-                <option value="default">Default</option>
-                <option value="large">Large</option>
-                <option value="xl">XL</option>
-              </select>
-            </label>
-            <label className="block text-sm font-medium">
-              Switch scan interval (ms)
-              <input
-                type="number"
-                className={cn(
-                  "mt-1 w-full rounded-xl border border-input bg-background px-3",
-                  bciMode ? "h-14" : "h-10"
-                )}
-                value={profile.switchScanMs}
-                onChange={(e) =>
-                  updateProfile({
-                    switchScanMs: parseInt(e.target.value, 10) || 1200,
-                  })
-                }
-              />
-            </label>
-            <label className="block text-sm font-medium">
-              Confirm timeout (ms)
-              <input
-                type="number"
-                className={cn(
-                  "mt-1 w-full rounded-xl border border-input bg-background px-3",
-                  bciMode ? "h-14" : "h-10"
-                )}
-                value={profile.confirmTimeoutMs}
-                onChange={(e) =>
-                  updateProfile({
-                    confirmTimeoutMs: parseInt(e.target.value, 10) || 2500,
-                  })
-                }
-              />
-            </label>
-            <Button asChild size={bciMode ? "bci" : "default"} variant="outline">
-              <Link href="/settings/calibrate">Open calibration wizard</Link>
-            </Button>
-            {profile.calibrated && (
-              <p className="text-xs text-success">Profile marked calibrated</p>
-            )}
-          </div>
-
-          <p className="mt-4 rounded-xl bg-muted/50 p-3 text-xs text-muted-foreground">
-            ROADMAP: Neuralink SDK hooks in{" "}
-            <code className="rounded bg-muted px-1">src/lib/bci/adapter.ts</code>
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className={cn(bciMode && "border-2")}>
-        <CardHeader>
-          <CardTitle>Accessibility</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {row(
             "high-contrast",
             "High contrast",
-            "Maximum contrast palette",
+            "Stronger colors for easier reading",
             highContrast,
             setHighContrast
           )}
           {row(
             "reduced-motion",
-            "Reduced motion",
-            "Minimize animations",
+            "Reduce motion",
+            "Less animation",
             reducedMotion,
             setReducedMotion
           )}
+          {row(
+            "voice",
+            "Voice search",
+            "Speak into Search (if your browser supports it)",
+            voiceEnabled,
+            setVoiceEnabled
+          )}
+          {row(
+            "sound",
+            "Soft sounds",
+            "Quiet beeps when you confirm actions",
+            profile.soundFeedback,
+            (v) => updateProfile({ soundFeedback: v })
+          )}
           <div
             className={cn(
-              "flex items-center justify-between gap-4 pt-4",
+              "mt-2 flex items-center justify-between gap-4 border-t border-border pt-4",
               bciMode && "pt-5"
             )}
           >
-            <div>
-              <p className={cn("font-medium", bciMode ? "text-base" : "text-sm")}>
-                Theme
-              </p>
-            </div>
+            <p className={cn("font-medium", bciMode ? "text-base" : "text-sm")}>
+              Theme
+            </p>
             <div className="flex gap-2">
-              {(["light", "dark", "system"] as const).map((t) => (
+              {(
+                [
+                  { id: "light", label: "Light" },
+                  { id: "dark", label: "Dark" },
+                  { id: "system", label: "Auto" },
+                ] as const
+              ).map((t) => (
                 <Button
-                  key={t}
+                  key={t.id}
                   size={bciMode ? "default" : "sm"}
-                  variant={theme === t ? "default" : "outline"}
-                  onClick={() => setTheme(t)}
+                  variant={theme === t.id ? "default" : "outline"}
+                  onClick={() => setTheme(t.id)}
                 >
-                  {t}
+                  {t.label}
                 </Button>
               ))}
             </div>
@@ -333,89 +246,135 @@ export default function SettingsPage() {
 
       <Card className={cn(bciMode && "border-2")}>
         <CardHeader>
-          <CardTitle>Privacy & data</CardTitle>
+          <CardTitle>Backup</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Local-first: Zustand + localStorage + IndexedDB queue. Cloud sync
-            waits on Supabase/Clerk setup (see TODO.md).
+            Your collection is saved in this browser. Export a file so you can
+            restore it later or move to another device.
           </p>
           <BackupPanel />
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size={bciMode ? "bci" : "default"}
-              onClick={() => {
-                refreshMarketPrices();
-                const p = getPortfolio();
-                addSnapshot({
-                  totalValue: p.totalValue,
-                  totalCost: p.totalCost,
-                  cardCount: p.cardCount,
-                  uniqueCount: p.uniqueCount,
-                  source: "market_refresh",
-                });
-                toast.success("Mock market prices refreshed + snapshot");
-              }}
-            >
-              Refresh mock market
-            </Button>
-            <Button
-              variant="secondary"
-              size={bciMode ? "bci" : "default"}
-              onClick={() => startGuidedTour()}
-            >
-              Replay guided tour
-            </Button>
-            <Button
-              variant="outline"
-              size={bciMode ? "bci" : "default"}
-              onClick={async () => {
-                await unregisterServiceWorkers();
-                toast.success("Service worker cleared — reloading…");
-                window.setTimeout(() => window.location.reload(), 400);
-              }}
-            >
-              Clear PWA cache
-            </Button>
-            <Button
-              variant="destructive"
-              size={bciMode ? "bci" : "default"}
-              disabled={showcase && lockData}
-              title={
-                showcase && lockData
-                  ? "Disabled in showcase mode (data locked)"
-                  : undefined
-              }
-              onClick={() => {
-                if (showcase && lockData) {
-                  toast.error("Exit showcase mode to reset data");
-                  return;
-                }
-                resetToSeed();
-                toast.success("Collection reset to demo seed");
-              }}
-            >
-              Reset demo collection
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            size={bciMode ? "bci" : "default"}
+            onClick={() => startGuidedTour()}
+          >
+            Replay quick start
+          </Button>
         </CardContent>
       </Card>
 
       <Card className={cn(bciMode && "border-2")}>
-        <CardHeader>
-          <CardTitle>Showcase & intent socket</CardTitle>
+        <CardHeader className="pb-2">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between text-left"
+            onClick={() => setShowDanger((v) => !v)}
+            aria-expanded={showDanger}
+          >
+            <CardTitle>Reset & repair</CardTitle>
+            {showDanger ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </button>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {row(
-            "showcase",
-            "Showcase mode",
-            "BCI on, seed data locked, intent socket listening — for Neurabeach demos",
-            showcase,
-            (v) => (v ? enableShowcase() : disableShowcase())
-          )}
-          <IntentSocketPanel />
-        </CardContent>
+        {showDanger && (
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Only if something looks wrong. Export a backup first.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size={bciMode ? "bci" : "default"}
+                onClick={() => {
+                  refreshMarketPrices();
+                  const p = getPortfolio();
+                  addSnapshot({
+                    totalValue: p.totalValue,
+                    totalCost: p.totalCost,
+                    cardCount: p.cardCount,
+                    uniqueCount: p.uniqueCount,
+                    source: "market_refresh",
+                  });
+                  toast.success("Demo prices refreshed");
+                }}
+              >
+                Refresh demo prices
+              </Button>
+              <Button
+                variant="outline"
+                size={bciMode ? "bci" : "default"}
+                onClick={async () => {
+                  await unregisterServiceWorkers();
+                  toast.success("Cache cleared — reloading…");
+                  window.setTimeout(() => window.location.reload(), 400);
+                }}
+              >
+                Fix loading issues
+              </Button>
+              <Button
+                variant="destructive"
+                size={bciMode ? "bci" : "default"}
+                disabled={showcase && lockData}
+                onClick={() => {
+                  if (showcase && lockData) {
+                    toast.error("Turn off demo mode first");
+                    return;
+                  }
+                  if (
+                    !window.confirm(
+                      "Replace your collection with the sample demo cards?"
+                    )
+                  )
+                    return;
+                  resetToSeed();
+                  toast.success("Restored sample collection");
+                }}
+              >
+                Reset to sample cards
+              </Button>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      <Card className={cn(bciMode && "border-2")}>
+        <CardHeader className="pb-2">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between text-left"
+            onClick={() => setShowAdvanced((v) => !v)}
+            aria-expanded={showAdvanced}
+          >
+            <div>
+              <CardTitle>Advanced</CardTitle>
+              <p className="mt-1 text-sm font-normal text-muted-foreground">
+                Demo mode and accessibility bridges — most people can skip this
+              </p>
+            </div>
+            {showAdvanced ? (
+              <ChevronUp className="h-5 w-5 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground" />
+            )}
+          </button>
+        </CardHeader>
+        {showAdvanced && (
+          <CardContent className="space-y-6">
+            {row(
+              "showcase",
+              "Demo / showcase mode",
+              "Locks sample data and turns on live-demo helpers",
+              showcase,
+              (v) => (v ? enableShowcase() : disableShowcase())
+            )}
+            <IntentSocketPanel />
+            <NeuralBridgePanel />
+          </CardContent>
+        )}
       </Card>
     </div>
   );

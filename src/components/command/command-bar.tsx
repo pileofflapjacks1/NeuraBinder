@@ -17,12 +17,10 @@ import { toast } from "sonner";
 import { useActivityStore } from "@/lib/stores/activity-store";
 
 const EXAMPLES = [
-  "Show me all Illustration Rares I own under $40",
-  "What am I missing for a master set of Scarlet & Violet 151?",
-  "How much is my entire graded Pokémon collection worth right now?",
-  "Add Gengar to want list",
-  "Move Charizard to trade",
-  "Alert me if Iono under 100",
+  "Pikachu",
+  "Cards under $40",
+  "How much is my collection worth?",
+  "Show graded cards",
 ];
 
 interface CommandBarProps {
@@ -135,7 +133,7 @@ export function CommandBar({ compact }: CommandBarProps) {
         if (res.filters) setFilters(res.filters);
         if (res.sort) setSort(res.sort);
         playFeedback("select");
-        toast.success("Query ready — run actions below if needed");
+        toast.success("Found results — tap a step below if you need one");
       } finally {
         setLoading(false);
       }
@@ -189,7 +187,7 @@ export function CommandBar({ compact }: CommandBarProps) {
     >
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Command results
+          Results
         </span>
         <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(false)}>
           Close
@@ -213,7 +211,7 @@ export function CommandBar({ compact }: CommandBarProps) {
       {result?.actions && result.actions.length > 0 && (
         <div className="mb-3">
           <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-            Actions (1–2 intents)
+            Suggested next steps
           </p>
           <div className="flex flex-col gap-1">
             {result.actions.map((a, i) => (
@@ -259,7 +257,7 @@ export function CommandBar({ compact }: CommandBarProps) {
         onSubmit={onSubmit}
         className={cn("flex w-full items-center gap-2", bciMode && "gap-3")}
         role="search"
-        aria-label="Natural language collection query"
+        aria-label="Search your collection"
       >
         <div className="relative flex-1">
           <Sparkles
@@ -273,11 +271,7 @@ export function CommandBar({ compact }: CommandBarProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setOpen(true)}
-            placeholder={
-              bciMode
-                ? "Think it: “Add Gengar to want list”…"
-                : "Ask or command… e.g. Illustration Rares under $40"
-            }
+            placeholder="Card name or “how much is my collection?”"
             className="pl-10 pr-10"
             autoComplete="off"
             aria-autocomplete="list"

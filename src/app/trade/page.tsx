@@ -47,13 +47,13 @@ export default function TradePage() {
             bciMode ? "text-3xl" : "text-2xl"
           )}
         >
-          Trade match
+          Trade ideas
         </h1>
         <p className="text-sm text-muted-foreground">
-          Local peer matching (demo collectors). Global network needs auth later.
+          Match your trade list with demo collectors, or build a fair package.
         </p>
         <Button asChild size={bciMode ? "bci" : "default"} className="mt-3" variant="outline">
-          <Link href="/trade/calculator">Open package calculator</Link>
+          <Link href="/trade/calculator">Trade calculator</Link>
         </Button>
       </div>
 

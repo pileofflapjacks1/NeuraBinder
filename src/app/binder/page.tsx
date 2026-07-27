@@ -79,10 +79,10 @@ export default function BinderPage() {
               bciMode ? "text-3xl" : "text-2xl"
             )}
           >
-            Visual binder
+            Binder
           </h1>
           <p className="text-sm text-muted-foreground">
-            {profileName}&apos;s pages · 3×3 spatial memory · BCI-friendly
+            {profileName}&apos;s set pages · see what you own and what&apos;s missing
           </p>
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
@@ -109,7 +109,7 @@ export default function BinderPage() {
             variant="outline"
             onClick={announceTour}
           >
-            Binder tour
+            Read aloud
           </Button>
           <Button
             size={bciMode ? "bci" : "default"}

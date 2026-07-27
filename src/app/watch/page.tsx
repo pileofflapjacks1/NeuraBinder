@@ -99,17 +99,17 @@ export default function WatchPage() {
               bciMode ? "text-3xl" : "text-2xl"
             )}
           >
-            Watch & intel
+            Price alerts
           </h1>
           <p className="text-sm text-muted-foreground">
-            Local price alerts, watchlist, and seed market notes
+            Get notified when a card hits your price
             {marketRefreshedAt && (
-              <> · last refresh {new Date(marketRefreshedAt).toLocaleTimeString()}</>
+              <> · updated {new Date(marketRefreshedAt).toLocaleTimeString()}</>
             )}
           </p>
         </div>
         <Button size={bciMode ? "bci" : "default"} onClick={refresh}>
-          Refresh mock market
+          Refresh prices
         </Button>
       </div>
 

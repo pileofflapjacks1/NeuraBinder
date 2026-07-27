@@ -68,7 +68,7 @@ export function ScanFlow() {
       }
       setCameraOn(true);
     } catch {
-      setCameraError("Camera unavailable — use Simulate / Batch instead.");
+      setCameraError("Camera unavailable — try “Try sample” below instead.");
       setCameraOn(false);
     }
   };
@@ -156,11 +156,11 @@ export function ScanFlow() {
             bciMode ? "text-3xl" : "text-2xl"
           )}
         >
-          Scan
+          Add by photo
         </h1>
         <p className="mt-1 text-muted-foreground">
-          Batch queue → ranked candidates → one-intent confirm.{" "}
-          <Badge variant="secondary">{pendingCount()} pending</Badge>
+          Take a photo (or try a sample), pick the right card, confirm.{" "}
+          <Badge variant="secondary">{pendingCount()} waiting</Badge>
         </p>
       </div>
 
@@ -218,7 +218,7 @@ export function ScanFlow() {
               size={bciMode ? "bci" : "lg"}
               onClick={captureToQueue}
             >
-              Simulate one
+              Try sample
             </Button>
             <Button
               variant="secondary"
@@ -226,7 +226,7 @@ export function ScanFlow() {
               onClick={() => batchSimulate(5)}
             >
               <Layers className="h-4 w-4" />
-              Batch ×5
+              Try 5 samples
             </Button>
             {cameraOn && (
               <Button variant="ghost" size={bciMode ? "bci" : "default"} onClick={stopCamera}>

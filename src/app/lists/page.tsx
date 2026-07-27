@@ -59,10 +59,10 @@ export default function ListsPage() {
               bciMode ? "text-3xl" : "text-2xl"
             )}
           >
-            Lists
+            Want & trade lists
           </h1>
           <p className="text-sm text-muted-foreground">
-            Want, trade, for sale, investment — share only when you choose
+            Cards you want, extras to trade, and sale lists
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

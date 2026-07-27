@@ -96,21 +96,20 @@ export default function GradingPage() {
               bciMode ? "text-3xl" : "text-2xl"
             )}
           >
-            Grading pipeline
+            Grading tracker
           </h1>
           <p className="text-sm text-muted-foreground">
-            Local board for {activeName} — no PSA API. Track candidates → lab →
-            return.
+            Follow cards {activeName} is sending out for grading
           </p>
         </div>
         <Badge variant="secondary">
-          {mine.length} jobs · fees ~{formatCurrency(totalFees)}
+          {mine.length} cards · fees ~{formatCurrency(totalFees)}
         </Badge>
       </div>
 
       <Card className={cn(bciMode && "border-2")}>
         <CardHeader>
-          <CardTitle className="text-base">Add to pipeline</CardTitle>
+          <CardTitle className="text-base">Add a card</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex flex-wrap gap-2">

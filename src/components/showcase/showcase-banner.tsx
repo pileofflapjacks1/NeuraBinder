@@ -30,30 +30,19 @@ export function ShowcaseBanner() {
       data-showcase="banner"
     >
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2">
-        <Badge variant="default">Showcase</Badge>
-        {bciMode && <Badge variant="secondary">BCI Mode</Badge>}
-        {lockData && <Badge variant="outline">Data locked</Badge>}
-        {sock && (
-          <Badge
-            variant={
-              sock.status === "open"
-                ? "success"
-                : sock.status === "error"
-                  ? "destructive"
-                  : "secondary"
-            }
-          >
-            intent:{sock.transport}/{sock.status}
-            {sock.received ? ` · ${sock.received} rx` : ""}
-          </Badge>
+        <Badge variant="default">Demo mode</Badge>
+        {bciMode && <Badge variant="secondary">Easy mode</Badge>}
+        {lockData && <Badge variant="outline">Sample data locked</Badge>}
+        {sock && sock.status === "open" && (
+          <Badge variant="success">Live demo connected</Badge>
         )}
         <span className="text-muted-foreground">{bannerLabel}</span>
         <div className="ml-auto flex flex-wrap gap-2">
           <Button asChild size="sm" variant="secondary">
-            <Link href="/demo">Demo console</Link>
+            <Link href="/demo">Demo</Link>
           </Button>
           <Button size="sm" variant="ghost" onClick={() => disable()}>
-            Exit showcase
+            Exit demo
           </Button>
         </div>
       </div>

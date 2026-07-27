@@ -18,8 +18,8 @@ export default function Error({
     <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center gap-4 px-4 text-center">
       <h1 className="text-2xl font-bold">Something went wrong</h1>
       <p className="text-sm text-muted-foreground">
-        A client error stopped this view. Try again, or hard-refresh (clear
-        service worker cache if the site was updated).
+        Try again. If the page keeps failing after an update, open Settings →
+        Reset & repair → Fix loading issues.
       </p>
       <div className="flex flex-wrap justify-center gap-2">
         <Button onClick={() => reset()}>Try again</Button>

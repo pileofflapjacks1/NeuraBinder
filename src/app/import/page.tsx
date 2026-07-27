@@ -59,11 +59,11 @@ export default function ImportPage() {
             bciMode ? "text-3xl" : "text-2xl"
           )}
         >
-          Import
+          Import spreadsheet
         </h1>
         <p className="text-sm text-muted-foreground">
-          CSV from NeuraBinder, TCGPlayer-style, or Collectr-style exports.
-          Matching is local against the bundled catalog.
+          Paste a CSV from TCGPlayer, Collectr, or NeuraBinder. Matching happens
+          on this device — nothing is uploaded.
         </p>
       </div>
 

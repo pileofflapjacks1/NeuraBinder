@@ -9,43 +9,26 @@ import { cn } from "@/lib/utils";
 const STEPS = [
   {
     title: "Welcome to NeuraBinder",
-    body: "A BCI-native TCG binder. This short tour stays fully local — no account needed.",
+    body: "Track the cards you own. No sign-up — everything stays on this device.",
     action: null as string | null,
   },
   {
-    title: "Enable BCI Mode",
-    body: "Larger targets, lower density, discrete intents (Enter, ←/→, /, Esc). Toggle anytime in the header.",
-    action: "bci",
+    title: "Start with My cards",
+    body: "That’s your collection. Tap a card to change quantity, condition, or notes.",
+    action: "/collection",
   },
   {
-    title: "Intent palette (⌘K)",
-    body: "Jump to Find, Scan, Trade, Worth, Missing in one or two signals. Predicted actions rank first.",
-    action: "intents",
-  },
-  {
-    title: "Scan confirm loop",
-    body: "Batch-scan cards, then confirm the top candidate with one intent.",
-    action: "/scan",
-  },
-  {
-    title: "Visual binder",
-    body: "Stable 3×3 pages for spatial memory and cheapest path to complete a set.",
-    action: "/binder",
-  },
-  {
-    title: "Ask your collection",
-    body: "Use the command bar: filters, portfolio questions, or actions like “Add Gengar to want list”.",
+    title: "Search anytime",
+    body: "Use the Search button (top right) to find a card by name.",
     action: "command",
   },
 ];
 
-const STORAGE_KEY = "neurabinder-tour-done";
+const STORAGE_KEY = "neurabinder-tour-done-v2";
 
 export function GuidedTour() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
-  const setBciMode = useBciStore((s) => s.setBciMode);
-  const setIntentPaletteOpen = useBciStore((s) => s.setIntentPaletteOpen);
   const setCommandBarOpen = useBciStore((s) => s.setCommandBarOpen);
   const bciMode = useBciStore((s) => s.bciMode);
   const router = useRouter();
@@ -58,7 +41,6 @@ export function GuidedTour() {
     }
   }, []);
 
-  // Allow re-open from settings via custom event
   useEffect(() => {
     const reopen = () => {
       setStep(0);
@@ -83,41 +65,43 @@ export function GuidedTour() {
 
   const next = () => {
     const a = current.action;
-    if (a === "bci") setBciMode(true);
-    if (a === "intents") setIntentPaletteOpen(true);
     if (a === "command") setCommandBarOpen(true);
     if (a?.startsWith("/")) router.push(a);
 
-    if (step >= STEPS.length - 1) finish();
-    else setStep((s) => s + 1);
+    if (step >= STEPS.length - 1) {
+      finish();
+      router.push("/collection");
+    } else setStep((s) => s + 1);
   };
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+      className="fixed inset-0 z-[110] flex items-end justify-center bg-black/50 p-4 sm:items-center"
       role="dialog"
       aria-modal="true"
-      aria-label="Guided tour"
+      aria-label="Quick start"
     >
       <div
         className={cn(
-          "w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl",
+          "w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl",
           bciMode && "border-2 p-8"
         )}
       >
         <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-primary">
-          Tour {step + 1}/{STEPS.length}
+          {step + 1} of {STEPS.length}
         </p>
         <h2 className={cn("font-bold", bciMode ? "text-2xl" : "text-xl")}>
           {current.title}
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">{current.body}</p>
+        <p className="mt-3 text-muted-foreground leading-relaxed">
+          {current.body}
+        </p>
         <div className="mt-6 flex flex-wrap gap-2">
-          <Button size={bciMode ? "bci" : "default"} onClick={next}>
-            {step >= STEPS.length - 1 ? "Finish" : "Next"}
+          <Button size={bciMode ? "bci" : "lg"} onClick={next} className="min-w-[8rem]">
+            {step >= STEPS.length - 1 ? "Open my cards" : "Next"}
           </Button>
           <Button
-            size={bciMode ? "bci" : "default"}
+            size={bciMode ? "bci" : "lg"}
             variant="ghost"
             onClick={finish}
           >

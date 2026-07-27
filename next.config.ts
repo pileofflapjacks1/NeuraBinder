@@ -7,6 +7,21 @@ const nextConfig: NextConfig = {
   // Avoid monorepo lockfile root inference warning when ~/package-lock.json exists
   turbopack: {
     root: process.cwd(),
+    // neuralbridge optionally imports Node fs — stub only those (do not alias `path`)
+    resolveAlias: {
+      "fs/promises": "./src/lib/empty-module.ts",
+      fs: "./src/lib/empty-module.ts",
+    },
+  },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        "fs/promises": false,
+      };
+    }
+    return config;
   },
   images: {
     remotePatterns: [
@@ -16,7 +31,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // PWA headers for offline-friendly caching of static assets (service worker optional Phase 2)
   headers: async () => [
     {
       source: "/manifest.webmanifest",
