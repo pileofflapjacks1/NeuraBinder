@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Local NeuralBridge-shaped intent WebSocket server for NeuraBinder demos.
+ * Local Neurabridge-shaped intent WebSocket server for NeuraBinder demos.
  *
  *   pnpm intent:ws
  *   → ws://127.0.0.1:7843

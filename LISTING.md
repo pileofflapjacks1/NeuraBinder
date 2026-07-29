@@ -11,7 +11,7 @@ Source of truth for catalog re-seed. Keep in sync with Neurabeach `seed-proj-neu
 | **Featured** | yes |
 | **Collection** | `col-neura-suite` |
 | **Suite role** | `app` |
-| **Depends on** | `neuralbridge` |
+| **Depends on** | `neurabridge` |
 | **GitHub** | https://github.com/pileofflapjacks1/NeuraBinder |
 | **Live demo** | https://neura-binder.vercel.app/demo |
 | **A11y** | https://neura-binder.vercel.app/a11y |
@@ -19,7 +19,7 @@ Source of truth for catalog re-seed. Keep in sync with Neurabeach `seed-proj-neu
 
 ## Short description
 
-> BCI-inspired TCG binder with live /demo, BCI Mode, and first-class NeuralBridge integration (in-app simulator or multi-client service). Computer-side only — reference suite app.
+> BCI-inspired TCG binder with live /demo, BCI Mode, and first-class Neurabridge integration (in-app simulator or multi-client service). Computer-side only — reference suite app.
 
 ## Screenshots (public URLs)
 
@@ -35,14 +35,14 @@ Computer-side web app only. Not implant software. Not affiliated with Neuralink,
 
 ## Tags
 
-`typescript` `nextjs` `bci-mode` `accessibility` `tcg` `intent-v1` `web` `neura-suite` `neurabinder` `pwa` `showcase` `neuralbridge`
+`typescript` `nextjs` `bci-mode` `accessibility` `tcg` `intent-v1` `web` `neura-suite` `neurabinder` `pwa` `showcase` `neurabridge`
 
 ## Manifest highlights
 
 ```json
 {
   "suite_role": "app",
-  "depends_on": ["neuralbridge"],
+  "depends_on": ["neurabridge"],
   "entrypoint": "https://neura-binder.vercel.app/demo",
   "safety_class": "computer_side",
   "runtime": "web"

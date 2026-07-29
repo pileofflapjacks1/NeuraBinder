@@ -1,7 +1,7 @@
 /**
  * Generic intent stream shapes for NeuraBinder.
  *
- * Compatible with future **NeuralBridge** / suite middleware — not implant APIs.
+ * Compatible with future **Neurabridge** / suite middleware — not implant APIs.
  * Sources: synthetic (demo), keyboard, switch, velocity_2d (pointer/BCI cursor).
  *
  * safety_class: computer_side · simulation only today
@@ -78,7 +78,7 @@ const CLASS_LABELS = new Set<BciIntent>([
 type Listener = (ev: GenericIntentEvent) => void;
 
 /**
- * In-process bus. NeuralBridge can later publish here (or via WebSocket)
+ * In-process bus. Neurabridge can later publish here (or via WebSocket)
  * without NeuraBinder importing implant SDKs.
  */
 class GenericIntentBus {
@@ -157,7 +157,7 @@ class GenericIntentBus {
     }
 
     if (ev.kind === "velocity_2d") {
-      // Continuous cursor is OS/browser-owned; log for future NeuralBridge cursor glue
+      // Continuous cursor is OS/browser-owned; log for future Neurabridge cursor glue
       if (typeof window !== "undefined" && (window as unknown as { __nbVel?: unknown }).__nbVel) {
         // reserved
       }

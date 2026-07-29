@@ -3,7 +3,7 @@
   "name": "neurabinder",
   "display_name": "NeuraBinder",
   "version": "0.3.0",
-  "description": "BCI-inspired TCG binder with NeuralBridge integration (simulator or multi-client). Computer-side web app — not implant software.",
+  "description": "BCI-inspired TCG binder with Neurabridge integration (simulator or multi-client). Computer-side web app — not implant software.",
   "safety_class": "computer_side",
   "runtime": "web",
   "inputs": [
@@ -27,6 +27,6 @@
   "entrypoint": "https://neura-binder.vercel.app/demo",
   "repository": "https://github.com/pileofflapjacks1/NeuraBinder",
   "suite_role": "app",
-  "depends_on": ["neuralbridge"],
+  "depends_on": ["neurabridge"],
   "banned_claims": true
 }

@@ -2,12 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Local suite package (file:../neuralbridge)
-  transpilePackages: ["neuralbridge"],
+  // Local suite package (file:../neurabridge)
+  transpilePackages: ["neurabridge"],
   // Avoid monorepo lockfile root inference warning when ~/package-lock.json exists
   turbopack: {
     root: process.cwd(),
-    // neuralbridge optionally imports Node fs — stub only those (do not alias `path`)
+    // neurabridge optionally imports Node fs — stub only those (do not alias `path`)
     resolveAlias: {
       "fs/promises": "./src/lib/empty-module.ts",
       fs: "./src/lib/empty-module.ts",

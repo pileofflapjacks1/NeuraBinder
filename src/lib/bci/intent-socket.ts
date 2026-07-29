@@ -1,5 +1,5 @@
 /**
- * Intent socket — NeuralBridge-compatible ingress for NeuraBinder.
+ * Intent socket — Neurabridge-compatible ingress for NeuraBinder.
  *
  * Transports (computer-side / simulation only):
  * 1. window.postMessage  — parent iframe / Neurabeach embed
@@ -16,7 +16,7 @@ import {
 } from "@/lib/bci/generic-intent";
 
 export const INTENT_MESSAGE_TYPE = "neurabinder.intent";
-export const INTENT_MESSAGE_TYPE_ALT = "neuralbridge.intent";
+export const INTENT_MESSAGE_TYPE_ALT = "neurabridge.intent";
 export const INTENT_CHANNEL = "neurabinder-intent";
 
 /** Suggested local URL for `pnpm intent:ws` — not auto-connected in production */

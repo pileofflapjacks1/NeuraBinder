@@ -1,28 +1,28 @@
 /**
- * NeuralBridge client for NeuraBinder — computer-side only.
+ * Neurabridge client for NeuraBinder — computer-side only.
  *
  * Modes:
  * - off: disabled
- * - simulator: in-browser NeuralBridge simulator (no extra process)
- * - remote: multi-client `neuralbridge serve` (ws://127.0.0.1:7711)
+ * - simulator: in-browser Neurabridge simulator (no extra process)
+ * - remote: multi-client `neurabridge serve` (ws://127.0.0.1:7711)
  *
  * Maps suite vocabulary → NeuraBinder BciIntent via injectBciIntent / generic bus.
  */
 
 import {
-  NeuralBridge,
+  Neurabridge,
   mapIntentionToSuiteLabel,
-  type NeuralBridgeOptions,
+  type NeurabridgeOptions,
   type BridgeStatus,
-} from "neuralbridge";
+} from "neurabridge";
 import { injectBciIntent } from "@/lib/bci/generic-intent";
 import { genericIntentBus } from "@/lib/bci/generic-intent";
 import type { BciIntent } from "@/lib/types";
 
-export type NeuralBridgeMode = "off" | "simulator" | "remote";
+export type NeurabridgeMode = "off" | "simulator" | "remote";
 
-export interface NeuralBridgeClientConfig {
-  mode: NeuralBridgeMode;
+export interface NeurabridgeClientConfig {
+  mode: NeurabridgeMode;
   /** Remote service URL when mode=remote */
   remoteUrl: string;
   remoteRole: "controller" | "observer";
@@ -34,15 +34,15 @@ export interface NeuralBridgeClientConfig {
   scenario?: string;
 }
 
-export interface NeuralBridgeClientState {
-  mode: NeuralBridgeMode;
+export interface NeurabridgeClientState {
+  mode: NeurabridgeMode;
   status: BridgeStatus | null;
   lastLabel: string | null;
   lastError: string | null;
   connected: boolean;
 }
 
-const DEFAULT_CONFIG: NeuralBridgeClientConfig = {
+const DEFAULT_CONFIG: NeurabridgeClientConfig = {
   mode: "off",
   remoteUrl: "ws://127.0.0.1:7711",
   remoteRole: "controller",
@@ -61,21 +61,21 @@ const SUITE_TO_BCI: Record<string, BciIntent> = {
   search: "search",
   add: "add",
   remove: "remove",
-  // NeuralBridge focus → treat as next for scanning UIs
+  // Neurabridge focus → treat as next for scanning UIs
   focus: "next",
   click: "select",
 };
 
-type StateListener = (s: NeuralBridgeClientState) => void;
+type StateListener = (s: NeurabridgeClientState) => void;
 
 /**
- * Singleton NeuralBridge host for the NeuraBinder shell.
+ * Singleton Neurabridge host for the NeuraBinder shell.
  */
-class NeuralBridgeClient {
-  private bridge: NeuralBridge | null = null;
+class NeurabridgeClient {
+  private bridge: Neurabridge | null = null;
   private unsubs: Array<() => void> = [];
-  private config: NeuralBridgeClientConfig = { ...DEFAULT_CONFIG };
-  private state: NeuralBridgeClientState = {
+  private config: NeurabridgeClientConfig = { ...DEFAULT_CONFIG };
+  private state: NeurabridgeClientState = {
     mode: "off",
     status: null,
     lastLabel: null,
@@ -84,11 +84,11 @@ class NeuralBridgeClient {
   };
   private listeners = new Set<StateListener>();
 
-  getConfig(): NeuralBridgeClientConfig {
+  getConfig(): NeurabridgeClientConfig {
     return { ...this.config };
   }
 
-  getState(): NeuralBridgeClientState {
+  getState(): NeurabridgeClientState {
     return { ...this.state };
   }
 
@@ -103,7 +103,7 @@ class NeuralBridgeClient {
     this.listeners.forEach((l) => l(snap));
   }
 
-  private setState(partial: Partial<NeuralBridgeClientState>) {
+  private setState(partial: Partial<NeurabridgeClientState>) {
     this.state = { ...this.state, ...partial };
     this.emit();
   }
@@ -111,7 +111,7 @@ class NeuralBridgeClient {
   /**
    * Apply config and (re)connect when mode !== off.
    */
-  async start(config: Partial<NeuralBridgeClientConfig> = {}): Promise<void> {
+  async start(config: Partial<NeurabridgeClientConfig> = {}): Promise<void> {
     this.config = { ...this.config, ...config };
     await this.stop();
 
@@ -128,7 +128,7 @@ class NeuralBridgeClient {
     if (typeof window === "undefined") return;
 
     const options = this.buildOptions();
-    this.bridge = new NeuralBridge(options);
+    this.bridge = new Neurabridge(options);
 
     this.unsubs.push(
       this.bridge.on("connectionChange", (s) => {
@@ -159,7 +159,7 @@ class NeuralBridgeClient {
       if (this.config.forceBciMode) {
         // Soft signal to app store without hard import cycle
         window.dispatchEvent(
-          new CustomEvent("neurabinder:neuralbridge", {
+          new CustomEvent("neurabinder:neurabridge", {
             detail: { connected: true, mode: this.config.mode },
           }),
         );
@@ -191,7 +191,7 @@ class NeuralBridgeClient {
     });
   }
 
-  /** Inject a synthetic intention through NeuralBridge policies (tests / UI). */
+  /** Inject a synthetic intention through Neurabridge policies (tests / UI). */
   inject(type: string, confidence = 0.95): void {
     this.bridge?.injectIntention(type, confidence, { via: "neurabinder-ui" });
   }
@@ -200,12 +200,12 @@ class NeuralBridgeClient {
     this.bridge?.playScenario(id);
   }
 
-  getBridge(): NeuralBridge | null {
+  getBridge(): Neurabridge | null {
     return this.bridge;
   }
 
-  private buildOptions(): NeuralBridgeOptions {
-    const base: NeuralBridgeOptions = {
+  private buildOptions(): NeurabridgeOptions {
+    const base: NeurabridgeOptions = {
       autoConnect: false,
       logLevel: "warn",
       enableFallbackToMouseKeyboard: false,
@@ -287,11 +287,11 @@ class NeuralBridgeClient {
   }
 }
 
-let shared: NeuralBridgeClient | null = null;
+let shared: NeurabridgeClient | null = null;
 
-export function getNeuralBridgeClient(): NeuralBridgeClient {
-  if (!shared) shared = new NeuralBridgeClient();
+export function getNeurabridgeClient(): NeurabridgeClient {
+  if (!shared) shared = new NeurabridgeClient();
   return shared;
 }
 
-export { DEFAULT_CONFIG as NEURALBRIDGE_DEFAULT_CONFIG };
+export { DEFAULT_CONFIG as NEURABRIDGE_DEFAULT_CONFIG };

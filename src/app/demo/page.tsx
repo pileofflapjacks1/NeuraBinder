@@ -187,7 +187,7 @@ export default function DemoPage() {
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
             Emits generic <code className="rounded bg-muted px-1">class_label</code>{" "}
-            events (NeuralBridge-compatible shape). Same path keyboard intents
+            events (Neurabridge-compatible shape). Same path keyboard intents
             use — no implant API.
           </p>
           <div className="flex flex-wrap gap-2">

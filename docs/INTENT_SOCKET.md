@@ -1,30 +1,30 @@
 # Intent socket protocol (NeuraBinder)
 
-Computer-side / simulation only. Compatible with **NeuralBridge**-shaped generic intents. Not implant I/O.
+Computer-side / simulation only. Compatible with **Neurabridge**-shaped generic intents. Not implant I/O.
 
 ## Transports
 
 | Transport | How |
 |-----------|-----|
-| **NeuralBridge** (preferred suite bus) | Settings → **NeuralBridge**: in-app **simulator** or **remote** `neuralbridge serve` (`ws://127.0.0.1:7711`) |
+| **Neurabridge** (preferred suite bus) | Settings → **Neurabridge**: in-app **simulator** or **remote** `neurabridge serve` (`ws://127.0.0.1:7711`) |
 | `window.postMessage` | Parent iframe / Neurabeach embed |
 | `BroadcastChannel("neurabinder-intent")` | Multi-tab loopback |
 | WebSocket (legacy intent socket) | `pnpm intent:ws` → `ws://127.0.0.1:7843` or `NEXT_PUBLIC_INTENT_WS_URL` |
 
-### NeuralBridge (multi-client)
+### Neurabridge (multi-client)
 
 ```bash
 # Terminal 1 — shared suite service
-cd ~/Projects/neuralbridge && npm run service
+cd ~/Projects/neurabridge && npm run service
 
 # Terminal 2 — NeuraBinder
 cd ~/Projects/neurabinder && pnpm dev
-# Settings → NeuralBridge → Mode: Remote → Connect (controller)
+# Settings → Neurabridge → Mode: Remote → Connect (controller)
 ```
 
 In-app simulator needs no extra process: Mode **Simulator**.
 
-Vocabulary mapping (NeuralBridge → NeuraBinder):  
+Vocabulary mapping (Neurabridge → NeuraBinder):  
 `click`/`primary` → `select`, `next`/`scroll_down` → `next`, `back`/`prev` → `back`/`prev`, `confirm`, `cancel`, `search`, `add`, `remove`.
 
 ## Envelope
@@ -43,7 +43,7 @@ Vocabulary mapping (NeuralBridge → NeuraBinder):
 }
 ```
 
-`type` may also be `neuralbridge.intent`.
+`type` may also be `neurabridge.intent`.
 
 ## Event kinds (`inputs` in manifest)
 

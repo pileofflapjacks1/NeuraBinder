@@ -6,8 +6,8 @@
 
 **Version:** 0.3.0  
 **Live demo:** [neura-binder.vercel.app/demo](https://neura-binder.vercel.app/demo) · **A11y:** [/a11y](https://neura-binder.vercel.app/a11y)  
-**Suite role:** app (`depends_on: neuralbridge`) · **Manifest:** [`neurabeach-manifest.json`](./neurabeach-manifest.json) · **Listing:** [`LISTING.md`](./LISTING.md)  
-**Intent / NeuralBridge:** [docs/INTENT_SOCKET.md](./docs/INTENT_SOCKET.md) · Settings → NeuralBridge in the app  
+**Suite role:** app (`depends_on: neurabridge`) · **Manifest:** [`neurabeach-manifest.json`](./neurabeach-manifest.json) · **Listing:** [`LISTING.md`](./LISTING.md)  
+**Intent / Neurabridge:** [docs/INTENT_SOCKET.md](./docs/INTENT_SOCKET.md) · Settings → Neurabridge in the app  
 **Screenshots:** [`public/screenshots/`](./public/screenshots/) · **OG:** [`public/og/demo.svg`](./public/og/demo.svg)
 
 ---
@@ -17,7 +17,7 @@
 | Piece | Role |
 |-------|------|
 | **Neurabeach** | Catalog / storefront — listing slug **`neurabinder`**, collection **`col-neura-suite`** |
-| **NeuralBridge** | Intent middleware — Settings → NeuralBridge (simulator or multi-client service) |
+| **Neurabridge** | Intent middleware — Settings → Neurabridge (simulator or multi-client service) |
 | **NeuraBinder** | This app — end-user web MVP |
 | **Intent → OS** | Reference adapter (separate package) |
 
@@ -28,7 +28,7 @@ Package contract: **[`neurabeach-manifest.json`](./neurabeach-manifest.json)**
 | `safety_class` | `computer_side` |
 | `runtime` | `web` |
 | `suite_role` | `app` |
-| `depends_on` | `neuralbridge` |
+| `depends_on` | `neurabridge` |
 | `entrypoint` | https://neura-binder.vercel.app/demo |
 | `inputs` | `class_label`, `switch_binary`, `velocity_2d`, `synthetic` |
 | `banned_claims` | `true` |
@@ -49,12 +49,12 @@ pnpm dev
 | https://neura-binder.vercel.app/demo | **Public live demo** (no account) |
 | http://localhost:3000/demo | Local showcase — BCI Mode, intents, record/replay |
 | http://localhost:3000/a11y | Accessibility scorecard |
-| Settings → **NeuralBridge** | In-app simulator or multi-client service (`ws://127.0.0.1:7711`) |
+| Settings → **Neurabridge** | In-app simulator or multi-client service (`ws://127.0.0.1:7711`) |
 
 ```bash
 pnpm build    # must succeed for ship
 pnpm start    # production server
-# Optional: NeuralBridge multi-client bus (from neuralbridge checkout)
+# Optional: Neurabridge multi-client bus (from neurabridge checkout)
 #   npm run service   → ws://127.0.0.1:7711
 pnpm intent:ws  # legacy local intent WS on :7843
 pnpm lint
@@ -92,9 +92,9 @@ npx vercel --prod
 | Navigate | ← → or `n` `p` |
 | Undo / redo | `⌘Z` / `⌘⇧Z` |
 
-Synthetic intents (NeuralBridge-shaped): `src/lib/bci/generic-intent.ts` — used on **`/demo`**.
+Synthetic intents (Neurabridge-shaped): `src/lib/bci/generic-intent.ts` — used on **`/demo`**.
 
-Keyboard emulator: `src/lib/bci/adapter.ts`. Future: plug generic streams from NeuralBridge; do **not** hardcode implant APIs.
+Keyboard emulator: `src/lib/bci/adapter.ts`. Future: plug generic streams from Neurabridge; do **not** hardcode implant APIs.
 
 ---
 

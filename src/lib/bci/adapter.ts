@@ -4,7 +4,7 @@
  * Not affiliated with Neuralink. Not implant firmware or medical software.
  *
  * ROADMAP — generic intent / future hardware bridges:
- * 1. Prefer GenericIntentEvent shapes in `generic-intent.ts` (NeuralBridge-ready).
+ * 1. Prefer GenericIntentEvent shapes in `generic-intent.ts` (Neurabridge-ready).
  * 2. Map class_label / switch_binary → BciIntent (select, confirm, cancel, …).
  * 3. velocity_2d reserved for continuous cursor when a middleware provides it.
  * 4. Optional sensory feedback via sendFeedback (haptic stubs).

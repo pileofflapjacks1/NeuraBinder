@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import {
-  getNeuralBridgeClient,
-  type NeuralBridgeClientConfig,
-  type NeuralBridgeClientState,
-  type NeuralBridgeMode,
-} from "@/lib/bci/neuralbridge-client";
+  getNeurabridgeClient,
+  type NeurabridgeClientConfig,
+  type NeurabridgeClientState,
+  type NeurabridgeMode,
+} from "@/lib/bci/neurabridge-client";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,19 +15,19 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const STORAGE_KEY = "neurabinder.neuralbridge.config";
+const STORAGE_KEY = "neurabinder.neurabridge.config";
 
-function loadStored(): Partial<NeuralBridgeClientConfig> {
+function loadStored(): Partial<NeurabridgeClientConfig> {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Partial<NeuralBridgeClientConfig>) : {};
+    return raw ? (JSON.parse(raw) as Partial<NeurabridgeClientConfig>) : {};
   } catch {
     return {};
   }
 }
 
-function saveStored(cfg: NeuralBridgeClientConfig) {
+function saveStored(cfg: NeurabridgeClientConfig) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
   } catch {
@@ -36,14 +36,14 @@ function saveStored(cfg: NeuralBridgeClientConfig) {
 }
 
 /**
- * Settings / showcase panel: connect NeuraBinder to NeuralBridge
+ * Settings / showcase panel: connect NeuraBinder to Neurabridge
  * (in-app simulator or multi-client service).
  */
-export function NeuralBridgePanel() {
+export function NeurabridgePanel() {
   const bciMode = useBciStore((s) => s.bciMode);
   const setBciMode = useBciStore((s) => s.setBciMode);
-  const [state, setState] = useState<NeuralBridgeClientState | null>(null);
-  const [mode, setMode] = useState<NeuralBridgeMode>("off");
+  const [state, setState] = useState<NeurabridgeClientState | null>(null);
+  const [mode, setMode] = useState<NeurabridgeMode>("off");
   const [remoteUrl, setRemoteUrl] = useState("ws://127.0.0.1:7711");
   const [role, setRole] = useState<"controller" | "observer">("controller");
   const [token, setToken] = useState("");
@@ -58,7 +58,7 @@ export function NeuralBridgePanel() {
     if (stored.remoteToken) setToken(stored.remoteToken);
     if (stored.clientName) setClientName(stored.clientName);
 
-    const client = getNeuralBridgeClient();
+    const client = getNeurabridgeClient();
     return client.subscribe(setState);
   }, []);
 
@@ -68,13 +68,13 @@ export function NeuralBridgePanel() {
       const d = (e as CustomEvent<{ connected?: boolean }>).detail;
       if (d?.connected) setBciMode(true);
     };
-    window.addEventListener("neurabinder:neuralbridge", onEvt);
-    return () => window.removeEventListener("neurabinder:neuralbridge", onEvt);
+    window.addEventListener("neurabinder:neurabridge", onEvt);
+    return () => window.removeEventListener("neurabinder:neurabridge", onEvt);
   }, [setBciMode]);
 
-  const apply = async (nextMode: NeuralBridgeMode) => {
+  const apply = async (nextMode: NeurabridgeMode) => {
     setBusy(true);
-    const cfg: NeuralBridgeClientConfig = {
+    const cfg: NeurabridgeClientConfig = {
       mode: nextMode,
       remoteUrl,
       remoteRole: role,
@@ -86,19 +86,19 @@ export function NeuralBridgePanel() {
     saveStored(cfg);
     setMode(nextMode);
     try {
-      await getNeuralBridgeClient().start(cfg);
+      await getNeurabridgeClient().start(cfg);
       if (nextMode === "off") {
-        toast.message("NeuralBridge disconnected");
+        toast.message("Neurabridge disconnected");
       } else {
         toast.success(
           nextMode === "simulator"
-            ? "NeuralBridge simulator connected"
-            : `NeuralBridge remote (${role}) connecting…`,
+            ? "Neurabridge simulator connected"
+            : `Neurabridge remote (${role}) connecting…`,
         );
         setBciMode(true);
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to start NeuralBridge");
+      toast.error(e instanceof Error ? e.message : "Failed to start Neurabridge");
     } finally {
       setBusy(false);
     }
@@ -110,7 +110,7 @@ export function NeuralBridgePanel() {
   return (
     <Card className={cn(bciMode && "border-2")}>
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
-        <CardTitle className="text-base">NeuralBridge</CardTitle>
+        <CardTitle className="text-base">Neurabridge</CardTitle>
         <div className="flex flex-wrap gap-1">
           <Badge variant={connected ? "default" : "secondary"}>
             {mode === "off" ? "off" : statusLabel}
@@ -123,7 +123,7 @@ export function NeuralBridgePanel() {
       <CardContent className="space-y-4 text-sm">
         <p className="text-muted-foreground">
           Suite intent middleware — simulator in-browser, or multi-client{" "}
-          <code className="text-xs">neuralbridge serve</code> as controller /
+          <code className="text-xs">neurabridge serve</code> as controller /
           observer. Maps vocabulary (click→select, next, confirm, …) into
           NeuraBinder intents.
         </p>
@@ -134,7 +134,7 @@ export function NeuralBridgePanel() {
             <select
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               value={mode}
-              onChange={(e) => setMode(e.target.value as NeuralBridgeMode)}
+              onChange={(e) => setMode(e.target.value as NeurabridgeMode)}
               disabled={busy}
             >
               <option value="off">Off</option>
@@ -215,7 +215,7 @@ export function NeuralBridgePanel() {
             variant="secondary"
             disabled={busy || !connected}
             onClick={() => {
-              getNeuralBridgeClient().inject("click", 0.95);
+              getNeurabridgeClient().inject("click", 0.95);
               toast.message("Injected click → select");
             }}
           >
@@ -226,7 +226,7 @@ export function NeuralBridgePanel() {
             variant="secondary"
             disabled={busy || !connected || mode !== "simulator"}
             onClick={() => {
-              getNeuralBridgeClient().playScenario("navigation");
+              getNeurabridgeClient().playScenario("navigation");
               toast.message("Playing navigation scenario");
             }}
           >
@@ -236,7 +236,7 @@ export function NeuralBridgePanel() {
 
         <p className="text-xs text-muted-foreground">
           Terminal:{" "}
-          <code>cd ~/Projects/neuralbridge && npm run service</code>
+          <code>cd ~/Projects/neurabridge && npm run service</code>
           {" · "}
           Dashboard:{" "}
           <a
