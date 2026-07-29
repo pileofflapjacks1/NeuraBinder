@@ -17,10 +17,11 @@ import { getBciAdapter } from "@/lib/bci/adapter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Camera, Upload, X } from "lucide-react";
 
 /**
  * Responsive column counts for a Collectr-style dense grid.
- * Easy mode uses fewer columns (larger targets).
+ * Full-width layout (filters on top) → more columns than the old sidebar layout.
  */
 function useGridCols(bciMode: boolean, detailOpen: boolean): number {
   const [width, setWidth] = useState(1024);
@@ -32,20 +33,21 @@ function useGridCols(bciMode: boolean, detailOpen: boolean): number {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  // Detail panel eats horizontal space on large screens
-  const effective = detailOpen && width >= 1024 ? width - 320 : width;
+  // Detail drawer on desktop takes ~320–360px
+  const effective = detailOpen && width >= 1024 ? width - 360 : width;
 
   if (bciMode) {
     if (effective < 480) return 2;
-    if (effective < 768) return 3;
-    if (effective < 1100) return 3;
-    return 4;
+    if (effective < 720) return 3;
+    if (effective < 1100) return 4;
+    return 5;
   }
-  if (effective < 420) return 3;
-  if (effective < 640) return 3;
-  if (effective < 900) return 4;
-  if (effective < 1200) return 5;
-  return 6;
+  if (effective < 400) return 3;
+  if (effective < 560) return 4;
+  if (effective < 768) return 4;
+  if (effective < 1024) return 5;
+  if (effective < 1280) return 6;
+  return 7;
 }
 
 export function CollectionView() {
@@ -78,12 +80,14 @@ export function CollectionView() {
     return getItems().find((i) => i.id === selectedId) ?? null;
   }, [selectedId, getItems, userCards]);
 
+  const detailOpen = Boolean(selected && !bulkMode);
+
   const missing = filters.missingForMasterSet
     ? getMissingForSet(filters.missingForMasterSet)
     : [];
 
   const totalValue = items.reduce((s, i) => s + i.totalValue, 0);
-  const cols = useGridCols(bciMode, Boolean(selected && !bulkMode));
+  const cols = useGridCols(bciMode, detailOpen);
 
   useEffect(() => {
     if (!bciMode) return;
@@ -117,17 +121,27 @@ export function CollectionView() {
     }
   }, [items.length, focusIndex, setFocusIndex]);
 
-  // Keep focused card in view (no virtualizer — plain scroll)
   useEffect(() => {
     if (!bciMode || !items.length) return;
     const el = document.getElementById(`card-${items[focusIndex]?.id}`);
     el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [focusIndex, bciMode, items]);
 
+  // Escape closes detail
+  useEffect(() => {
+    if (!detailOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") selectItem(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [detailOpen, selectItem]);
+
   return (
     <div className="flex flex-col gap-4">
       <SwitchScanController itemCount={items.length} />
 
+      {/* Page header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1
@@ -146,10 +160,16 @@ export function CollectionView() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild size={bciMode ? "default" : "sm"} variant="secondary">
-            <Link href="/import">Import</Link>
+            <Link href="/import" className="gap-1.5">
+              <Upload className="h-3.5 w-3.5" />
+              Import
+            </Link>
           </Button>
           <Button asChild size={bciMode ? "default" : "sm"} variant="outline">
-            <Link href="/scan">Add photo</Link>
+            <Link href="/scan" className="gap-1.5">
+              <Camera className="h-3.5 w-3.5" />
+              Add photo
+            </Link>
           </Button>
           <Button
             size={bciMode ? "default" : "sm"}
@@ -171,6 +191,9 @@ export function CollectionView() {
         </div>
       )}
 
+      {/* Filters above grid — full width */}
+      <CollectionFilters />
+
       {filters.setIds?.[0] && <SetProgressBar setId={filters.setIds[0]} />}
       {filters.missingForMasterSet && !filters.setIds?.[0] && (
         <SetProgressBar setId={filters.missingForMasterSet} />
@@ -181,57 +204,52 @@ export function CollectionView() {
         </Badge>
       )}
 
+      {missing.length > 0 && filters.missingForMasterSet && (
+        <section
+          className="rounded-2xl border border-warning/40 bg-warning/5 p-4"
+          aria-label="Missing cards"
+        >
+          <h2 className="mb-2 font-semibold">Still need these</h2>
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {missing.map((c) => (
+              <li
+                key={c.id}
+                className={cn(
+                  "rounded-xl border border-border bg-card px-3",
+                  bciMode ? "py-3 text-base" : "py-2 text-sm"
+                )}
+              >
+                <span className="font-medium">{c.name}</span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  · #{c.number} · {formatCurrency(c.marketPrice)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Grid + optional detail */}
       <div
         className={cn(
-          "grid gap-4",
-          selected
-            ? "lg:grid-cols-[220px_1fr_300px] xl:grid-cols-[240px_1fr_320px]"
-            : "lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr]"
+          "relative",
+          detailOpen && "lg:grid lg:grid-cols-[1fr_320px] lg:gap-4 xl:grid-cols-[1fr_340px]"
         )}
       >
-        <div className="lg:sticky lg:top-36 lg:self-start">
-          <CollectionFilters />
-        </div>
-
         <div>
-          {missing.length > 0 && filters.missingForMasterSet && (
-            <section
-              className="mb-4 rounded-2xl border border-warning/40 bg-warning/5 p-4"
-              aria-label="Missing cards"
-            >
-              <h2 className="mb-2 font-semibold">Still need these</h2>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                {missing.map((c) => (
-                  <li
-                    key={c.id}
-                    className={cn(
-                      "rounded-xl border border-border bg-card px-3",
-                      bciMode ? "py-3 text-base" : "py-2 text-sm"
-                    )}
-                  >
-                    <span className="font-medium">{c.name}</span>
-                    <span className="text-muted-foreground">
-                      {" "}
-                      · #{c.number} · {formatCurrency(c.marketPrice)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
           {items.length === 0 ? (
-            <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center">
+            <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-border p-8 text-center">
               <p className="text-lg font-medium">No cards match</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Tap Clear filters, or search by a card name.
+                Clear filters or search by a card name.
               </p>
             </div>
           ) : (
             <div
-              className="max-h-[min(75vh,960px)] overflow-auto rounded-2xl border border-border bg-background/50 p-2 sm:p-3"
               role="listbox"
               aria-label="Collection cards"
+              className="pb-4"
             >
               <div
                 className="grid gap-2 sm:gap-2.5"
@@ -260,7 +278,7 @@ export function CollectionView() {
                       {bulkMode && (
                         <input
                           type="checkbox"
-                          className="absolute left-1.5 top-1.5 z-10 h-4 w-4"
+                          className="absolute left-1.5 top-1.5 z-10 h-4 w-4 rounded border-border"
                           checked={selectedIds.includes(item.id)}
                           onChange={() => toggleBulkId(item.id)}
                           aria-label={`Select ${item.card.name}`}
@@ -287,8 +305,9 @@ export function CollectionView() {
           )}
         </div>
 
-        {selected && !bulkMode && (
-          <div className="lg:sticky lg:top-36 lg:max-h-[calc(100vh-10rem)] lg:self-start">
+        {/* Desktop sticky detail */}
+        {detailOpen && selected && (
+          <div className="hidden lg:sticky lg:top-28 lg:block lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-hidden">
             <CardDetailPanel
               item={selected}
               onClose={() => selectItem(null)}
@@ -296,6 +315,39 @@ export function CollectionView() {
           </div>
         )}
       </div>
+
+      {/* Mobile / tablet detail drawer */}
+      {detailOpen && selected && (
+        <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/45"
+            aria-label="Close details"
+            onClick={() => selectItem(null)}
+          />
+          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl">
+            <div className="flex justify-center pt-2 pb-1">
+              <span className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+            </div>
+            <div className="absolute right-2 top-2 z-10">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => selectItem(null)}
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="max-h-[88vh] overflow-y-auto">
+              <CardDetailPanel
+                item={selected}
+                onClose={() => selectItem(null)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

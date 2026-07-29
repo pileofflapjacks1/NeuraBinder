@@ -52,18 +52,23 @@ export function CardDetailPanel({ item, onClose }: CardDetailPanelProps) {
   return (
     <div
       className={cn(
-        "flex h-full flex-col rounded-2xl border border-border bg-card shadow-lg",
+        "flex h-full max-h-full flex-col rounded-2xl border border-border bg-card shadow-lg",
         bciMode && "border-2"
       )}
       role="dialog"
       aria-label={`Details for ${item.card.name}`}
     >
-      <div className="flex items-start justify-between gap-2 border-b border-border p-4">
-        <div>
-          <h2 className={cn("font-semibold", bciMode ? "text-xl" : "text-lg")}>
+      <div className="flex items-start justify-between gap-2 border-b border-border p-3 sm:p-4">
+        <div className="min-w-0">
+          <h2
+            className={cn(
+              "truncate font-semibold",
+              bciMode ? "text-xl" : "text-base sm:text-lg"
+            )}
+          >
             {item.card.name}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="truncate text-sm text-muted-foreground">
             {item.card.setName} · #{item.card.number}
           </p>
         </div>
@@ -72,19 +77,20 @@ export function CardDetailPanel({ item, onClose }: CardDetailPanelProps) {
           size={bciMode ? "icon-bci" : "icon"}
           onClick={onClose}
           aria-label="Close details"
+          className="hidden shrink-0 lg:inline-flex"
         >
           <X />
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="relative mx-auto mb-4 aspect-[3/4] w-full max-w-[220px] overflow-hidden rounded-xl bg-muted">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+        <div className="relative mx-auto mb-3 aspect-[5/7] w-full max-w-[160px] overflow-hidden rounded-xl bg-muted/40 sm:max-w-[180px]">
           {item.card.imageUrl ? (
             <Image
               src={item.card.imageUrl}
               alt={item.card.name}
               fill
-              className="object-contain"
+              className="object-contain p-1"
               unoptimized
             />
           ) : (
