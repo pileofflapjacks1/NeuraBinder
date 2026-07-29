@@ -38,8 +38,15 @@ function saveStored(cfg: NeurabridgeClientConfig) {
 /**
  * Settings / showcase panel: connect NeuraBinder to Neurabridge
  * (in-app simulator or multi-client service).
+ *
+ * `liveDemo` — opened from NeuraBeach “Neurabridge live demo” deep link;
+ * auto-starts the in-app simulator and shows a clear LIVE banner.
  */
-export function NeurabridgePanel() {
+export function NeurabridgePanel({
+  liveDemo = false,
+}: {
+  liveDemo?: boolean;
+} = {}) {
   const bciMode = useBciStore((s) => s.bciMode);
   const setBciMode = useBciStore((s) => s.setBciMode);
   const [state, setState] = useState<NeurabridgeClientState | null>(null);
@@ -49,6 +56,7 @@ export function NeurabridgePanel() {
   const [token, setToken] = useState("");
   const [clientName, setClientName] = useState("neurabinder");
   const [busy, setBusy] = useState(false);
+  const [autoStarted, setAutoStarted] = useState(false);
 
   useEffect(() => {
     const stored = loadStored();
@@ -92,7 +100,7 @@ export function NeurabridgePanel() {
       } else {
         toast.success(
           nextMode === "simulator"
-            ? "Neurabridge simulator connected"
+            ? "Neurabridge simulator connected — middleware is LIVE"
             : `Neurabridge remote (${role}) connecting…`,
         );
         setBciMode(true);
@@ -104,23 +112,95 @@ export function NeurabridgePanel() {
     }
   };
 
+  // NeuraBeach deep link: start in-app simulator so middleware is visibly live
+  useEffect(() => {
+    if (!liveDemo || autoStarted) return;
+    setAutoStarted(true);
+    void (async () => {
+      setMode("simulator");
+      setBusy(true);
+      const cfg: NeurabridgeClientConfig = {
+        mode: "simulator",
+        remoteUrl,
+        remoteRole: role,
+        remoteToken: token || undefined,
+        clientName: clientName || "neurabinder",
+        forceBciMode: true,
+        scenario: "navigation",
+      };
+      saveStored(cfg);
+      try {
+        await getNeurabridgeClient().start(cfg);
+        setBciMode(true);
+        toast.success("Neurabridge live demo — in-app simulator connected");
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Could not start Neurabridge demo",
+        );
+      } finally {
+        setBusy(false);
+      }
+    })();
+    // only on first liveDemo mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveDemo, autoStarted]);
+
   const connected = state?.connected ?? false;
   const statusLabel = state?.status?.connection.state ?? "—";
 
   return (
-    <Card className={cn(bciMode && "border-2")}>
+    <Card
+      id="neurabridge-panel"
+      className={cn(
+        bciMode && "border-2",
+        liveDemo && "border-2 border-emerald-500/70 shadow-md shadow-emerald-500/10",
+      )}
+    >
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="text-base">Neurabridge</CardTitle>
         <div className="flex flex-wrap gap-1">
+          {liveDemo && (
+            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
+              LIVE middleware demo
+            </Badge>
+          )}
           <Badge variant={connected ? "default" : "secondary"}>
             {mode === "off" ? "off" : statusLabel}
           </Badge>
+          {connected && (
+            <Badge variant="outline" className="border-emerald-500/50 text-emerald-700 dark:text-emerald-400">
+              connected
+            </Badge>
+          )}
           {state?.lastLabel && (
             <Badge variant="outline">last: {state.lastLabel}</Badge>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
+        {liveDemo && (
+          <div
+            className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2.5 text-[13px] leading-relaxed text-foreground"
+            role="status"
+          >
+            <strong className="text-emerald-800 dark:text-emerald-300">
+              You are viewing Neurabridge live
+            </strong>
+            {" — "}
+            this is NeuraBinder hosting the suite{" "}
+            <strong>intent middleware</strong> (in-app simulator). Status
+            badges above show connection. Full library + multi-client service:{" "}
+            <a
+              className="underline underline-offset-2"
+              href="https://neurabeach.com/projects/neurabridge"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Beach listing
+            </a>
+            .
+          </div>
+        )}
         <p className="text-muted-foreground">
           Suite intent middleware — simulator in-browser, or multi-client{" "}
           <code className="text-xs">neurabridge serve</code> as controller /

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { useCollectionStore } from "@/lib/stores/collection-store";
@@ -22,7 +22,19 @@ import { useProfileStore } from "@/lib/stores/profile-store";
 import { Input } from "@/components/ui/input";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
+function isNeurabridgeLiveQuery(params: URLSearchParams | null): boolean {
+  if (!params) return false;
+  const v =
+    params.get("neurabridge") ||
+    params.get("neuralbridge") ||
+    params.get("bridge");
+  if (!v) return false;
+  const n = v.toLowerCase();
+  return n === "live" || n === "1" || n === "true" || n === "demo" || n === "sim";
+}
+
 export default function SettingsPage() {
+  const [neurabridgeLive, setNeurabridgeLive] = useState(false);
   const { theme, setTheme } = useTheme();
   const bciMode = useBciStore((s) => s.bciMode);
   const setBciMode = useBciStore((s) => s.setBciMode);
@@ -50,6 +62,24 @@ export default function SettingsPage() {
   const [newName, setNewName] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showDanger, setShowDanger] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const live = isNeurabridgeLiveQuery(params);
+    setNeurabridgeLive(live);
+    if (live) setShowAdvanced(true);
+  }, []);
+
+  useEffect(() => {
+    if (!neurabridgeLive) return;
+    setShowAdvanced(true);
+    const t = window.setTimeout(() => {
+      document
+        .getElementById("neurabridge-panel")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 350);
+    return () => window.clearTimeout(t);
+  }, [neurabridgeLive]);
 
   const row = (
     id: string,
@@ -84,6 +114,35 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
+      {neurabridgeLive && (
+        <div
+          className="rounded-xl border-2 border-emerald-500/50 bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed"
+          role="status"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">
+              Neurabridge LIVE
+            </Badge>
+            <span className="font-semibold">Middleware demo in NeuraBinder</span>
+          </div>
+          <p className="mt-2 text-muted-foreground">
+            You opened this from{" "}
+            <a
+              className="font-medium text-foreground underline underline-offset-2"
+              href="https://neurabeach.com/projects/neurabridge"
+              target="_blank"
+              rel="noreferrer"
+            >
+              NeuraBeach → Neurabridge
+            </a>
+            . Neurabridge has no separate website — the{" "}
+            <strong className="text-foreground">live demo runs here</strong> as
+            intent middleware (in-app simulator auto-connects below). Watch the
+            green <strong className="text-foreground">LIVE</strong> / connection
+            badges on the Neurabridge panel.
+          </p>
+        </div>
+      )}
       <div>
         <h1
           className={cn(
@@ -372,7 +431,7 @@ export default function SettingsPage() {
               (v) => (v ? enableShowcase() : disableShowcase())
             )}
             <IntentSocketPanel />
-            <NeurabridgePanel />
+            <NeurabridgePanel liveDemo={neurabridgeLive} />
           </CardContent>
         )}
       </Card>
