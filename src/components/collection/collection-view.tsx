@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useEffect, useMemo, useState } from "react";
 import { useBciStore } from "@/lib/stores/bci-store";
 import { useCollectionStore } from "@/lib/stores/collection-store";
 import { CollectionFilters } from "@/components/collection/collection-filters";
@@ -16,16 +15,44 @@ import { SwitchScanController } from "@/components/bci/switch-scan";
 import { formatCurrency, cn } from "@/lib/utils";
 import { getBciAdapter } from "@/lib/bci/adapter";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+
+/**
+ * Responsive column counts for a Collectr-style dense grid.
+ * Easy mode uses fewer columns (larger targets).
+ */
+function useGridCols(bciMode: boolean, detailOpen: boolean): number {
+  const [width, setWidth] = useState(1024);
+
+  useEffect(() => {
+    const update = () => setWidth(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // Detail panel eats horizontal space on large screens
+  const effective = detailOpen && width >= 1024 ? width - 320 : width;
+
+  if (bciMode) {
+    if (effective < 480) return 2;
+    if (effective < 768) return 3;
+    if (effective < 1100) return 3;
+    return 4;
+  }
+  if (effective < 420) return 3;
+  if (effective < 640) return 3;
+  if (effective < 900) return 4;
+  if (effective < 1200) return 5;
+  return 6;
+}
 
 export function CollectionView() {
   const bciMode = useBciStore((s) => s.bciMode);
   const focusIndex = useBciStore((s) => s.focusIndex);
   const setFocusIndex = useBciStore((s) => s.setFocusIndex);
   const moveFocus = useBciStore((s) => s.moveFocus);
-  const profile = useBciStore((s) => s.profile);
   const [showTools, setShowTools] = useState(false);
 
   const filters = useCollectionStore((s) => s.filters);
@@ -56,17 +83,7 @@ export function CollectionView() {
     : [];
 
   const totalValue = items.reduce((s, i) => s + i.totalValue, 0);
-
-  const cols = bciMode ? 2 : 4;
-  const rowCount = Math.ceil(items.length / cols);
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const rowVirtualizer = useVirtualizer({
-    count: rowCount,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => (bciMode ? 280 : 240),
-    overscan: 3,
-  });
+  const cols = useGridCols(bciMode, Boolean(selected && !bulkMode));
 
   useEffect(() => {
     if (!bciMode) return;
@@ -100,12 +117,12 @@ export function CollectionView() {
     }
   }, [items.length, focusIndex, setFocusIndex]);
 
-  // Scroll virtual row into view when focus changes
+  // Keep focused card in view (no virtualizer — plain scroll)
   useEffect(() => {
     if (!bciMode || !items.length) return;
-    const row = Math.floor(focusIndex / cols);
-    rowVirtualizer.scrollToIndex(row, { align: "auto" });
-  }, [focusIndex, bciMode, cols, items.length, rowVirtualizer]);
+    const el = document.getElementById(`card-${items[focusIndex]?.id}`);
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [focusIndex, bciMode, items]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -168,8 +185,8 @@ export function CollectionView() {
         className={cn(
           "grid gap-4",
           selected
-            ? "lg:grid-cols-[240px_1fr_320px] xl:grid-cols-[260px_1fr_360px]"
-            : "lg:grid-cols-[240px_1fr] xl:grid-cols-[280px_1fr]"
+            ? "lg:grid-cols-[220px_1fr_300px] xl:grid-cols-[240px_1fr_320px]"
+            : "lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr]"
         )}
       >
         <div className="lg:sticky lg:top-36 lg:self-start">
@@ -212,79 +229,56 @@ export function CollectionView() {
             </div>
           ) : (
             <div
-              ref={parentRef}
-              className="h-[min(70vh,900px)] overflow-auto rounded-2xl border border-border"
+              className="max-h-[min(75vh,960px)] overflow-auto rounded-2xl border border-border bg-background/50 p-2 sm:p-3"
               role="listbox"
               aria-label="Collection cards"
             >
               <div
+                className="grid gap-2 sm:gap-2.5"
                 style={{
-                  height: `${rowVirtualizer.getTotalSize()}px`,
-                  width: "100%",
-                  position: "relative",
+                  gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
                 }}
               >
-                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                  const start = virtualRow.index * cols;
-                  const rowItems = items.slice(start, start + cols);
+                {items.map((item, index) => {
+                  const onSelect = () => {
+                    setFocusIndex(index);
+                    if (bulkMode) toggleBulkId(item.id);
+                    else selectItem(item.id);
+                  };
                   return (
                     <div
-                      key={virtualRow.key}
-                      className={cn(
-                        "absolute left-0 top-0 grid w-full gap-3 p-3",
-                        bciMode
-                          ? "grid-cols-1 sm:grid-cols-2 gap-4"
-                          : "grid-cols-2 sm:grid-cols-3 xl:grid-cols-4"
-                      )}
-                      style={{
-                        height: `${virtualRow.size}px`,
-                        transform: `translateY(${virtualRow.start}px)`,
-                      }}
+                      key={item.id}
+                      id={`card-${item.id}`}
+                      role="option"
+                      aria-selected={
+                        bulkMode
+                          ? selectedIds.includes(item.id)
+                          : selectedId === item.id
+                      }
+                      className="relative min-w-0"
                     >
-                      {rowItems.map((item, colIdx) => {
-                        const index = start + colIdx;
-                        const onSelect = () => {
-                          setFocusIndex(index);
-                          if (bulkMode) toggleBulkId(item.id);
-                          else selectItem(item.id);
-                        };
-                        return (
-                          <div
-                            key={item.id}
-                            id={`card-${item.id}`}
-                            role="option"
-                            aria-selected={
-                              bulkMode
-                                ? selectedIds.includes(item.id)
-                                : selectedId === item.id
-                            }
-                            className="relative"
-                          >
-                            {bulkMode && (
-                              <input
-                                type="checkbox"
-                                className="absolute left-3 top-3 z-10 h-5 w-5"
-                                checked={selectedIds.includes(item.id)}
-                                onChange={() => toggleBulkId(item.id)}
-                                aria-label={`Select ${item.card.name}`}
-                              />
-                            )}
-                            <DwellTarget onActivate={onSelect}>
-                              <CardTile
-                                item={item}
-                                index={index}
-                                selected={
-                                  bulkMode
-                                    ? selectedIds.includes(item.id)
-                                    : selectedId === item.id
-                                }
-                                focused={bciMode && focusIndex === index}
-                                onSelect={onSelect}
-                              />
-                            </DwellTarget>
-                          </div>
-                        );
-                      })}
+                      {bulkMode && (
+                        <input
+                          type="checkbox"
+                          className="absolute left-1.5 top-1.5 z-10 h-4 w-4"
+                          checked={selectedIds.includes(item.id)}
+                          onChange={() => toggleBulkId(item.id)}
+                          aria-label={`Select ${item.card.name}`}
+                        />
+                      )}
+                      <DwellTarget onActivate={onSelect}>
+                        <CardTile
+                          item={item}
+                          index={index}
+                          selected={
+                            bulkMode
+                              ? selectedIds.includes(item.id)
+                              : selectedId === item.id
+                          }
+                          focused={bciMode && focusIndex === index}
+                          onSelect={onSelect}
+                        />
+                      </DwellTarget>
                     </div>
                   );
                 })}
@@ -294,7 +288,7 @@ export function CollectionView() {
         </div>
 
         {selected && !bulkMode && (
-          <div className="lg:sticky lg:top-36 lg:self-start lg:max-h-[calc(100vh-10rem)]">
+          <div className="lg:sticky lg:top-36 lg:max-h-[calc(100vh-10rem)] lg:self-start">
             <CardDetailPanel
               item={selected}
               onClose={() => selectItem(null)}
